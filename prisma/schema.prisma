@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int              @id @default(autoincrement())
+  username            String           @unique
+  password            String
+  role                String
+  createdAt           DateTime         @default(now()) @map("created_at")
+  kontak              String?              @map("kontak_wa")
+  subProgramId        Int?             @map("sub_program_id")
+  accessTokens        AccessToken[]
+  inputanRealisasi    DataRealisasi[]  @relation("InputOleh")
+  verifikasiRealisasi DataRealisasi[]  @relation("VerifikasiOleh")
+  subProgram          SubProgramKerja? @relation("PenugasanUser", fields: [subProgramId], references: [id])
+
+  @@index([subProgramId], map: "users_sub_program_id_fkey")
+  @@map("users")
+}
+
+model AccessToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique @db.VarChar(255)
+  userId    Int       @map("user_id")
+  expiresAt DateTime? @map("expires_at")
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("access_tokens")
+}
+
+model ProgramKerja {
+  id          Int               @id @default(autoincrement())
+  namaProgram String?           @map("nama_program")
+  deskripsi   String?
+  subProgram  SubProgramKerja[]
+
+  @@map("program_kerja")
+}
+
+model SubProgramKerja {
+  id             Int                  @id @default(autoincrement())
+  programKerjaId Int                  @map("program_kerja_id")
+  namaSubProgram String?              @map("nama_sub_program")
+  target         Int
+  kategori       KategoriSubProgram[]
+  programKerja   ProgramKerja         @relation(fields: [programKerjaId], references: [id])
+  staffPengampu  User[]               @relation("PenugasanUser")
+
+  @@index([programKerjaId], map: "sub_program_kerja_program_kerja_id_fkey")
+  @@map("sub_program_kerja")
+}
+
+model KategoriSubProgram {
+  id            Int             @id @default(autoincrement())
+  subProgramId  Int             @map("sub_program_id")
+  namaKategori  String?         @map("nama_kategori")
+  dataRealisasi DataRealisasi[]
+  subProgram    SubProgramKerja @relation(fields: [subProgramId], references: [id])
+
+  @@index([subProgramId], map: "kategori_sub_program_sub_program_id_fkey")
+  @@map("kategori_sub_program")
+}
+
+model DataRealisasi {
+  id                Int                @id @default(autoincrement())
+  kategoriId        Int                @map("kategori_id")
+  diInputOleh       Int?               @map("di_input_oleh")
+  tanggalInput      DateTime           @default(now()) @map("tanggal_input")
+  buktiDukung       String?            @map("bukti_dukung")
+  statusVerifikasi  String?            @default("Menunggu") @map("status_verifikasi")
+  catatanRevisi     String?            @map("catatan_revisi") @db.Text
+  diVerifikasiOleh  Int?               @map("di_verifikasi_oleh")
+  tanggalVerifikasi DateTime?          @map("tanggal_verifikasi")
+  
+  inputer           User?              @relation("InputOleh", fields: [diInputOleh], references: [id])
+  verifikator       User?              @relation("VerifikasiOleh", fields: [diVerifikasiOleh], references: [id])
+  kategori          KategoriSubProgram @relation(fields: [kategoriId], references: [id])
+
+  detailBeasiswa    RealisasiBeasiswa[]
+  detailBosda       RealisasiBosda[]
+
+  @@index([diInputOleh], map: "data_realisasi_di_input_oleh_fkey")
+  @@index([diVerifikasiOleh], map: "data_realisasi_di_verifikasi_oleh_fkey")
+  @@index([kategoriId], map: "data_realisasi_kategori_id_fkey")
+  @@map("data_realisasi")
+}
+
+model RealisasiBeasiswa {
+  id              Int           @id @default(autoincrement())
+  dataRealisasiId Int           @map("data_realisasi_id")
+  namaPenerima    String        @map("nama_penerima")
+  noRegistrasi    String?       @map("no_registrasi")
+  alamat          String?       @db.Text
+  kabupaten       String?       @db.Text
+  institusiTujuan String?       @map("institusi_tujuan")
+  nominal         Decimal?      @db.Decimal(15, 2)
+  kontakPenerima  String?       @map("kontak_penerima")
+  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@map("realisasi_beasiswa")
+}
+
+model RealisasiBosda {
+  id              Int           @id @default(autoincrement())
+  dataRealisasiId Int           @map("data_realisasi_id")
+  
+  namaSekolah     String        @map("nama_sekolah")
+  kabupatenKota   String?       @map("kabupaten_kota")
+  jumlahSiswa     Int           @default(0) @map("jumlah_siswa")
+  totalPagu       Decimal?      @map("total_pagu") @db.Decimal(15, 2)
+  realisasi       Decimal?      @db.Decimal(15, 2) // Uang yang cair
+  
+  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@map("realisasi_bosda")
+}
