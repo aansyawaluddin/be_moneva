@@ -1,6 +1,8 @@
 import express from 'express';
-import { verifyToken, verifyGovernor } from '../middleware/authUser.js'; 
-import gubernurController from '../controllers/gubernurController.js';
+import { verifyToken, verifyGovernor } from '../middleware/authUser.js';
+import gubernurController from '../controllers/gubernur/gubernurController.js';
+import monitoringController from '../controllers/gubernur/monitoringController.js';
+import monitoringWilayahController from '../controllers/gubernur/monitoringWilayahController.js';
 
 const router = express.Router();
 
@@ -22,7 +24,21 @@ router.delete('/sub-program/:id', gubernurController.deleteSubProgram);
 router.post('/kategori', gubernurController.createKategori);
 router.delete('/kategori/:id', gubernurController.deleteKategori);
 
-router.get('/monitoring/stats', gubernurController.getMonitoringStats);
-router.get('/monitoring/penerima', gubernurController.getAllRealisasiDetail);
+// Monitoring
+// Statistik Rekapitulasi
+router.get('/monitoring/stats', monitoringController.getMonitoringStats);
+// Monitoring Wilayah
+router.get('/monitoring/wilayah', monitoringWilayahController.getMonitoringWilayah);
+
+// Monitoring Detail
+router.get('/monitoring/beasiswa', monitoringController.getMonitoringBeasiswa);
+router.get('/monitoring/bosda', monitoringController.getMonitoringBosda);
+router.get('/monitoring/seragam', monitoringController.getMonitoringSeragam);
+router.get('/monitoring/pkl', monitoringController.getMonitoringPkl);
+router.get('/monitoring/miskin', monitoringController.getMonitoringMiskin);
+router.get('/monitoring/guru', monitoringController.getMonitoringGuru);
+router.get('/monitoring/digital', monitoringController.getMonitoringDigital);
+
+
 
 export default router;

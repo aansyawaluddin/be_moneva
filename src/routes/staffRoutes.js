@@ -7,13 +7,15 @@ const router = express.Router();
 
 router.use(verifyToken);
 
-// Get Kategori sesuai tugas Staff (Untuk Dropdown di Frontend)
-router.get('/my-options', staffController.getMyKategoriOptions);
+// Get Jobdesk
+router.get('/jobdesk', staffController.getJobdesk);
 
 // Upload
 router.post('/upload', upload.single('file'), staffController.uploadLaporan);
 
 // History
 router.get('/history', staffController.getMyUploads);
+
+router.get('/laporan/:id', staffController.getDetailLaporan)
 
 export default router;

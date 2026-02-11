@@ -5,16 +5,23 @@ import jwt from 'jsonwebtoken';
 const authController = {
   // Register
   register: async (req, res) => {
+    console.log(`\n--- [REGISTER REQUEST] ---`);
+    console.log(`Data Masuk:`, { username: req.body.username, role: req.body.role });
+
     try {
       const { username, password, role, kontak, subProgramId } = req.body;
 
       const existingUser = await prisma.user.findUnique({ where: { username } });
-      if (existingUser) return res.status(400).json({ msg: "Username sudah digunakan" });
+      if (existingUser) {
+        console.log(`❌ [REGISTER FAIL] Username '${username}' sudah digunakan.`);
+        return res.status(400).json({ msg: "Username sudah digunakan" });
+      }
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
       if (role === 'Staff' && !subProgramId) {
+        console.log(`❌ [REGISTER FAIL] Role Staff tanpa Sub Program.`);
         return res.status(400).json({ msg: "Role Staff wajib memilih Sub Program Kerja" });
       }
 
@@ -23,13 +30,15 @@ const authController = {
           username,
           password: hashedPassword,
           role,
-          kontak: kontak, 
+          kontak: kontak,
           subProgramId: subProgramId ? Number(subProgramId) : null
         },
         include: {
-          subProgram: true 
+          subProgram: true
         }
       });
+
+      console.log(`✅ [REGISTER SUCCESS] User '${username}' berhasil dibuat (ID: ${user.id}).`);
 
       res.status(201).json({
         msg: "Registrasi Berhasil",
@@ -40,21 +49,30 @@ const authController = {
       });
 
     } catch (error) {
-      console.error("ERROR REGISTRASI:", error);
+      console.error("🔥 [REGISTER ERROR]:", error.message);
       res.status(500).json({ msg: "Terjadi kesalahan saat registrasi", error: error.message });
     }
   },
 
   // Login
   login: async (req, res) => {
+    console.log(`\n--- [LOGIN REQUEST] ---`);
+    console.log(`User mencoba login: ${req.body.username}`);
+
     try {
       const { username, password } = req.body;
 
       const user = await prisma.user.findUnique({ where: { username } });
-      if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
+      if (!user) {
+        console.log(`❌ [LOGIN FAIL] User '${username}' tidak ditemukan.`);
+        return res.status(404).json({ msg: "User tidak ditemukan" });
+      }
 
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return res.status(400).json({ msg: "Password salah" });
+      if (!isMatch) {
+        console.log(`❌ [LOGIN FAIL] Password salah untuk user '${username}'.`);
+        return res.status(400).json({ msg: "Password salah" });
+      }
 
       const accessToken = jwt.sign(
         { id: user.id, role: user.role, subProgramId: user.subProgramId },
@@ -84,17 +102,19 @@ const authController = {
         maxAge: 24 * 60 * 60 * 1000
       });
 
+      console.log(`✅ [LOGIN SUCCESS] User '${user.username}' berhasil login.`);
+
       res.json({
         accessToken,
         id: user.id,
         username: user.username,
         role: user.role,
         kontak: user.kontak,
-        subProgramId: user.subProgramId 
+        subProgramId: user.subProgramId
       });
 
     } catch (error) {
-      console.error(error);
+      console.error(`🔥 [LOGIN ERROR]:`, error);
       if (!res.headersSent) {
         res.status(500).json({ msg: error.message });
       }
@@ -103,8 +123,12 @@ const authController = {
 
   // Logout
   logout: async (req, res) => {
+    console.log(`\n--- [LOGOUT REQUEST] ---`);
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) return res.sendStatus(204);
+    if (!refreshToken) {
+      console.log(`ℹ️ [LOGOUT] Tidak ada token, skip.`);
+      return res.sendStatus(204);
+    }
 
     const tokenRecord = await prisma.accessToken.findUnique({
       where: { token: refreshToken }
@@ -117,57 +141,75 @@ const authController = {
     });
 
     res.clearCookie('refreshToken');
+    console.log(`✅ [LOGOUT SUCCESS] User logout.`);
     return res.sendStatus(200);
   },
 
   // Get User Profile 
-    getUserDetail: async (req, res) => {
-        try {
-            const userId = req.user.id; 
+  getUserDetail: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      console.log(`🔍 [PROFILE CHECK] ID: ${userId}`);
 
-            const user = await prisma.user.findUnique({
-                where: { id: Number(userId) },
-                include: {
-                    subProgram: {
-                        include: {
-                            programKerja: true 
-                        }
-                    },
+      const user = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        include: {
+          subProgram: {
+            include: {
+              programKerja: true
+            }
+          },
 
-                    inputanRealisasi: {
-                        orderBy: { tanggalInput: 'desc' }, 
-                        include: {
-                            kategori: true, 
-                            detailBeasiswa: true,
-                        }
-                    },
+          inputanRealisasi: {
+            orderBy: { tanggalInput: 'desc' },
+            include: {
+              subProgram: { select: { namaSubProgram: true, slug: true } }, 
+              detailBosda: true,
+              detailSpp: true,
+              detailPrakerin: true,
+              detailBeasiswa: true,
+              detailDigital: true,
+              detailVokasi: true,
+              detailCareer: true,
+              detailSeragam: true
+            }
+          },
 
-                    verifikasiRealisasi: {
-                        orderBy: { tanggalVerifikasi: 'desc' },
-                        include: {
-                            kategori: true,
-                            detailBeasiswa: true,
-                            inputer: { 
-                                select: { username: true, kontak: true }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
-            const { password, ...userData } = user;
-
-            res.json({
-                status: "success",
-                data: userData
-            });
-
-        } catch (error) {
-            res.status(500).json({ msg: error.message });
+          verifikasiRealisasi: {
+            orderBy: { tanggalVerifikasi: 'desc' },
+            include: {
+              subProgram: { select: { namaSubProgram: true, slug: true } }, 
+              inputer: {
+                select: { username: true, kontak: true, role: true }
+              },
+              detailBosda: true,
+              detailSpp: true,
+              detailPrakerin: true,
+              detailBeasiswa: true,
+              detailDigital: true,
+              detailVokasi: true,
+              detailCareer: true,
+              detailSeragam: true
+            }
+          }
         }
-    },
-  
+      });
+
+      if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
+
+      const { password, ...userData } = user;
+
+      res.json({
+        status: "success",
+        data: userData
+      });
+
+    } catch (error) {
+      console.error(`🔥 [PROFILE ERROR]:`, error.message);
+      res.status(500).json({ msg: error.message });
+    }
+  },
+
 };
 
 export default authController;
