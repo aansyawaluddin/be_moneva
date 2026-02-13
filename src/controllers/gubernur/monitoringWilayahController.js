@@ -7,29 +7,27 @@ const monitoringWilayahController = {
             const allRealisasi = await prisma.dataRealisasi.findMany({
                 where: { statusVerifikasi: 'Disetujui' },
                 include: {
-                    kategori: {
+                    subProgram: {
                         include: {
-                            subProgram: {
-                                include: {
-                                    programKerja: true
-                                }
-                            }
+                            programKerja: true
                         }
                     },
                     detailBeasiswa: true,
                     detailBosda: true,
-                    detailSeragam: true,
-                    detailPkl: true,
-                    detailGuru: true,
-                    detailBeasiswaMiskin: true,
-                    detailStarlink: true
+                    detailSpp: true,
+                    detailPrakerin: true,
+                    detailDigital: true,
+                    detailVokasi: true,
+                    detailCareer: true,
+                    detailSeragam: true
                 }
             });
 
             const cleanName = (name) => {
                 if (!name) return 'LAINNYA';
-                return name.trim().toUpperCase()
+                return name.toString().trim().toUpperCase()
                     .replace('KAB.', '')
+                    .replace('KABUPATEN', '')
                     .replace('KOTA', '')
                     .trim();
             };
@@ -40,31 +38,30 @@ const monitoringWilayahController = {
                 const namaKota = cleanName(kabupaten);
                 const uang = Number(nominal) || 0;
 
-                // Init Wilayah
                 if (!mapWilayah[namaKota]) {
                     mapWilayah[namaKota] = {
                         namaKabupaten: namaKota,
                         totalPenerima: 0,
                         totalAnggaran: 0,
-                        programs: {}
+                        programs: {} 
                     };
                 }
+
                 mapWilayah[namaKota].totalPenerima += 1;
                 mapWilayah[namaKota].totalAnggaran += uang;
 
-                // Init Program
                 if (!mapWilayah[namaKota].programs[namaProgram]) {
                     mapWilayah[namaKota].programs[namaProgram] = {
                         namaProgram: namaProgram,
                         totalPenerima: 0,
                         totalAnggaran: 0,
-                        subPrograms: {}
+                        subPrograms: {} 
                     };
                 }
+
                 mapWilayah[namaKota].programs[namaProgram].totalPenerima += 1;
                 mapWilayah[namaKota].programs[namaProgram].totalAnggaran += uang;
 
-                // Init Sub Program
                 if (!mapWilayah[namaKota].programs[namaProgram].subPrograms[namaSubProgram]) {
                     mapWilayah[namaKota].programs[namaProgram].subPrograms[namaSubProgram] = {
                         namaSubProgram: namaSubProgram,
@@ -72,13 +69,14 @@ const monitoringWilayahController = {
                         totalAnggaran: 0
                     };
                 }
+
                 mapWilayah[namaKota].programs[namaProgram].subPrograms[namaSubProgram].totalPenerima += 1;
                 mapWilayah[namaKota].programs[namaProgram].subPrograms[namaSubProgram].totalAnggaran += uang;
             };
 
             allRealisasi.forEach(header => {
-                const prog = header.kategori?.subProgram?.programKerja?.namaProgram || 'Tanpa Program';
-                const sub = header.kategori?.subProgram?.namaSubProgram || 'Tanpa Sub Program';
+                const prog = header.subProgram?.programKerja?.namaProgram || 'Tanpa Program';
+                const sub = header.subProgram?.namaSubProgram || 'Tanpa Sub Program';
 
                 const processDetailArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
@@ -89,48 +87,55 @@ const monitoringWilayahController = {
                     }
                 };
 
-                processDetailArray(header.detailBeasiswa, 'kabupaten');
-                processDetailArray(header.detailBosda, 'kabupatenKota');
+                processDetailArray(header.detailBeasiswa, 'kabupaten'); 
+                processDetailArray(header.detailBosda, 'kabupatenKota'); 
+                processDetailArray(header.detailSpp, 'kabupatenKota');
+                processDetailArray(header.detailPrakerin, 'kabupatenKota');
+                processDetailArray(header.detailDigital, 'kabupatenKota');
+                processDetailArray(header.detailVokasi, 'kabupatenKota');
+                processDetailArray(header.detailCareer, 'lokasi');
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
-                processDetailArray(header.detailPkl, 'kabupatenKota');
-                processDetailArray(header.detailGuru, 'kabupatenKota'); 
-                processDetailArray(header.detailBeasiswaMiskin, 'kabupatenKota');
-                processDetailArray(header.detailStarlink, 'kabupatenKota');
             });
 
             const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
 
-            const finalData = Object.values(mapWilayah).map(kota => {
-                const detailProgram = Object.values(kota.programs).map(prog => {
-                    const detailSubProgram = Object.values(prog.subPrograms).map(sub => ({
+            let finalData = Object.values(mapWilayah).map(kota => {
+
+                let listPrograms = Object.values(kota.programs).map(prog => {
+
+                    let listSub = Object.values(prog.subPrograms).map(sub => ({
                         namaSubProgram: sub.namaSubProgram,
                         totalPenerima: sub.totalPenerima,
                         totalAnggaran: formatRupiah(sub.totalAnggaran),
-                        raw: sub.totalAnggaran
+                        rawAnggaran: sub.totalAnggaran 
                     }));
-                    detailSubProgram.sort((a, b) => b.raw - a.raw);
-                    detailSubProgram.forEach(d => delete d.raw);
+
+                    listSub.sort((a, b) => b.rawAnggaran - a.rawAnggaran);
+                    listSub.forEach(d => delete d.rawAnggaran);
 
                     return {
                         namaProgram: prog.namaProgram,
+                        totalPenerima: prog.totalPenerima,
                         totalAnggaran: formatRupiah(prog.totalAnggaran),
-                        raw: prog.totalAnggaran,
-                        detailSubProgram: detailSubProgram
+                        rawAnggaran: prog.totalAnggaran,
+                        detailSubProgram: listSub
                     };
                 });
-                detailProgram.sort((a, b) => b.raw - a.raw);
-                detailProgram.forEach(d => delete d.raw);
+
+                listPrograms.sort((a, b) => b.rawAnggaran - a.rawAnggaran);
+                listPrograms.forEach(d => delete d.rawAnggaran);
 
                 return {
                     namaKabupaten: kota.namaKabupaten,
+                    totalPenerima: kota.totalPenerima,
                     totalAnggaran: formatRupiah(kota.totalAnggaran),
-                    raw: kota.totalAnggaran,
-                    detailProgram: detailProgram
+                    rawAnggaran: kota.totalAnggaran, 
+                    detailProgram: listPrograms
                 };
             });
 
-            finalData.sort((a, b) => b.raw - a.raw);
-            finalData.forEach(d => delete d.raw);
+            finalData.sort((a, b) => b.rawAnggaran - a.rawAnggaran);
+            finalData.forEach(d => delete d.rawAnggaran);
 
             res.json({
                 status: "success",
