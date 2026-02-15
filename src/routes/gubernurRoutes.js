@@ -31,6 +31,6 @@ router.get('/monitoring/stats', monitoringController.getMonitoringStats);
 router.get('/monitoring/wilayah', monitoringWilayahController.getMonitoringWilayah);
 
 // MONITORING DETAIL
-router.get('/program/:programSlug/subProgram/:subProgramSlug', monitoringController.getMonitoringDetail);
+router.get('/program/:programSlug/:subProgramSlug', monitoringController.getMonitoringDetail);
 
 export default router;
