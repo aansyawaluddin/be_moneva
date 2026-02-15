@@ -56,26 +56,25 @@ const authController = {
 
   // Login
   login: async (req, res) => {
-    console.log(`\n--- [LOGIN REQUEST] ---`);
-    console.log(`User mencoba login: ${req.body.username}`);
-
     try {
       const { username, password } = req.body;
 
-      const user = await prisma.user.findUnique({ where: { username } });
-      if (!user) {
-        console.log(`❌ [LOGIN FAIL] User '${username}' tidak ditemukan.`);
-        return res.status(404).json({ msg: "User tidak ditemukan" });
-      }
+      const user = await prisma.user.findUnique({
+        where: { username },
+        include: { programKerja: true }
+      });
+
+      if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
 
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        console.log(`❌ [LOGIN FAIL] Password salah untuk user '${username}'.`);
-        return res.status(400).json({ msg: "Password salah" });
-      }
+      if (!isMatch) return res.status(400).json({ msg: "Password salah" });
 
       const accessToken = jwt.sign(
-        { id: user.id, role: user.role, subProgramId: user.subProgramId },
+        {
+          id: user.id,
+          role: user.role,
+          programKerjaId: user.programKerjaId
+        },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
       );
@@ -86,14 +85,11 @@ const authController = {
         { expiresIn: '1d' }
       );
 
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 1);
-
       await prisma.accessToken.create({
         data: {
           token: refreshToken,
           userId: user.id,
-          expiresAt: expiresAt
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
         }
       });
 
@@ -102,22 +98,20 @@ const authController = {
         maxAge: 24 * 60 * 60 * 1000
       });
 
-      console.log(`✅ [LOGIN SUCCESS] User '${user.username}' berhasil login.`);
+      console.log(`✅ [LOGIN SUCCESS] User '${user.username}' (Program: ${user.programKerjaId})`);
 
       res.json({
         accessToken,
         id: user.id,
         username: user.username,
         role: user.role,
-        kontak: user.kontak,
-        subProgramId: user.subProgramId
+        dinas: user.dinas,
+        programKerjaId: user.programKerja ? user.programKerja.id : null
       });
 
     } catch (error) {
       console.error(`🔥 [LOGIN ERROR]:`, error);
-      if (!res.headersSent) {
-        res.status(500).json({ msg: error.message });
-      }
+      res.status(500).json({ msg: error.message });
     }
   },
 
@@ -163,7 +157,7 @@ const authController = {
           inputanRealisasi: {
             orderBy: { tanggalInput: 'desc' },
             include: {
-              subProgram: { select: { namaSubProgram: true, slug: true } }, 
+              subProgram: { select: { namaSubProgram: true, slug: true } },
               detailBosda: true,
               detailSpp: true,
               detailPrakerin: true,
@@ -178,7 +172,7 @@ const authController = {
           verifikasiRealisasi: {
             orderBy: { tanggalVerifikasi: 'desc' },
             include: {
-              subProgram: { select: { namaSubProgram: true, slug: true } }, 
+              subProgram: { select: { namaSubProgram: true, slug: true } },
               inputer: {
                 select: { username: true, kontak: true, role: true }
               },

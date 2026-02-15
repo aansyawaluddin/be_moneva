@@ -12,20 +12,22 @@ datasource db {
 // =========================================
 
 model User {
-  id                  Int      @id @default(autoincrement())
-  username            String   @unique
-  password            String
-  role                String
-  createdAt           DateTime @default(now()) @map("created_at")
-  kontak              String?  @map("kontak_wa")
-  subProgramId        Int?     @map("sub_program_id")
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String  
+  dinas     String? 
+  createdAt DateTime @default(now()) @map("created_at")
+  kontak    String?  @map("kontak_wa")
   
-  accessTokens        AccessToken[]
-  inputanRealisasi    DataRealisasi[]  @relation("InputOleh")
-  verifikasiRealisasi DataRealisasi[]  @relation("VerifikasiOleh")
-  subProgram          SubProgramKerja? @relation("PenugasanUser", fields: [subProgramId], references: [id])
+  programKerjaId Int?          @map("program_kerja_id")
+  programKerja   ProgramKerja? @relation(fields: [programKerjaId], references: [id])
 
-  @@index([subProgramId])
+  accessTokens        AccessToken[]
+  inputanRealisasi    DataRealisasi[] @relation("InputOleh")
+  verifikasiRealisasi DataRealisasi[] @relation("VerifikasiOleh")
+
+  @@index([programKerjaId])
   @@map("users")
 }
 
@@ -51,21 +53,21 @@ model ProgramKerja {
   namaProgram String?           @map("nama_program")
   slug        String            @unique
   deskripsi   String?           @db.Text
-  subProgram  SubProgramKerja[]
 
+  subProgram  SubProgramKerja[]
+  users       User[]
   @@map("program_kerja")
 }
 
 model SubProgramKerja {
-  id             Int             @id @default(autoincrement())
-  programKerjaId Int             @map("program_kerja_id")
-  namaSubProgram String?         @map("nama_sub_program")
-  slug           String          @unique
+  id             Int          @id @default(autoincrement())
+  programKerjaId Int          @map("program_kerja_id")
+  namaSubProgram String?      @map("nama_sub_program")
+  slug           String       @unique
   target         Int
   anggaran       BigInt
   
-  programKerja   ProgramKerja    @relation(fields: [programKerjaId], references: [id])
-  staffPengampu  User[]          @relation("PenugasanUser")
+  programKerja   ProgramKerja @relation(fields: [programKerjaId], references: [id])
   dataRealisasi  DataRealisasi[]
 
   @@index([programKerjaId])

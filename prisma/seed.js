@@ -19,22 +19,22 @@ async function main() {
   console.log('🌱 Memulai Seeding Database...');
 
   // 1. BERSIHKAN DATABASE
-  // Hapus detail
-  await prisma.realisasiBosda.deleteMany();
-  await prisma.realisasiSpp.deleteMany();
-  await prisma.realisasiPrakerin.deleteMany();
-  await prisma.realisasiBeasiswa.deleteMany();
-  await prisma.realisasiDigital.deleteMany();
-  await prisma.realisasiVokasi.deleteMany();
-  await prisma.realisasiCareerCenter.deleteMany();
-  await prisma.realisasiSeragam.deleteMany();
+  const tables = [
+    'realisasi_bosda', 'realisasi_spp', 'realisasi_prakerin',
+    'realisasi_beasiswa', 'realisasi_digital', 'realisasi_vokasi',
+    'realisasi_career_center', 'realisasi_seragam',
+    'data_realisasi', 'access_tokens', 'users',
+    'sub_program_kerja', 'program_kerja'
+  ];
 
-  // Hapus header & master
-  await prisma.dataRealisasi.deleteMany();
-  await prisma.accessToken.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.subProgramKerja.deleteMany();
-  await prisma.programKerja.deleteMany();
+  for (const table of tables) {
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM ${table}`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE ${table} AUTO_INCREMENT = 1`);
+    } catch (e) {
+      console.log(`⚠️ Skip clean table ${table}: ${e.message}`);
+    }
+  }
 
   console.log('🧹 Database lama telah dibersihkan.');
 
@@ -42,27 +42,34 @@ async function main() {
   const password = await bcrypt.hash('123', salt);
 
   // ============================================================
-  // PROGRAM BERANI CERDAS
+  // DATA MASTER SESUAI REQUEST
   // ============================================================
-  const beraniCerdas = {
-    namaProgram: 'Berani Cerdas',
-    deskripsi: 'Bantuan pendidikan tuntas dari SD hingga Perguruan Tinggi.',
-    subPrograms: [
-      { nama: 'Pemberian BOSDA bagi SMA, SMK dan SLB', code: 'bosda', target: 500, anggaran: 42000000000 },
-      { nama: 'Pemberian biaya SPP bagi siswa miskin di sekolah swasta', code: 'spp', target: 1000, anggaran: 5000000000 },
-      { nama: 'Biaya uji kompetensi dan biaya prakerin SMK', code: 'prakerin', target: 3000, anggaran: 3000000000 },
-      { nama: 'Pemberian beasiswa dan bantuan pendidikan', code: 'beasiswa', target: 28000, anggaran: 266120507972 },
-      { nama: 'Perbaikan sarana digital SMA/SMK', code: 'digital', target: 100, anggaran: 15000000000 },
-      { nama: 'Pelatihan Vokasional Siap Kerja', code: 'vokasi', target: 5000, anggaran: 10000000000 },
-      { nama: 'Sulteng Career Center', code: 'career', target: 1, anggaran: 2000000000 },
-      { nama: 'Bantuan Seragam Sekolah (SMA)', code: 'seragam', target: 10000, anggaran: 6500000000 }
-    ]
-  };
 
-  const otherPrograms = [
+  // Kita gabungkan data Berani Cerdas + Other Programs menjadi satu array
+  // Dan kita berikan mapping Dinas & Username Kadis manual agar rapi.
+
+  const allProgramsData = [
+    {
+      namaProgram: 'Berani Cerdas',
+      deskripsi: 'Bantuan pendidikan tuntas dari SD hingga Perguruan Tinggi.',
+      dinas: 'Dinas Pendidikan',
+      usernameKadis: 'kadis_pendidikan',
+      subPrograms: [
+        { nama: 'Pemberian BOSDA bagi SMA, SMK dan SLB', code: 'bosda', target: 500, anggaran: 42000000000 },
+        { nama: 'Pemberian biaya SPP bagi siswa miskin di sekolah swasta', code: 'spp', target: 1000, anggaran: 5000000000 },
+        { nama: 'Biaya uji kompetensi dan biaya prakerin SMK', code: 'prakerin', target: 3000, anggaran: 3000000000 },
+        { nama: 'Pemberian beasiswa dan bantuan pendidikan', code: 'beasiswa', target: 28000, anggaran: 266120507972 },
+        { nama: 'Perbaikan sarana digital SMA/SMK', code: 'digital', target: 100, anggaran: 15000000000 },
+        { nama: 'Pelatihan Vokasional Siap Kerja', code: 'vokasi', target: 5000, anggaran: 10000000000 },
+        { nama: 'Sulteng Career Center', code: 'career', target: 1, anggaran: 2000000000 },
+        { nama: 'Bantuan Seragam Sekolah (SMA)', code: 'seragam', target: 10000, anggaran: 6500000000 }
+      ]
+    },
     {
       namaProgram: 'Berani Sehat',
       deskripsi: 'Layanan kesehatan gratis dan berkualitas.',
+      dinas: 'Dinas Kesehatan',
+      usernameKadis: 'kadis_kesehatan',
       subPrograms: [
         { nama: 'Integrasi Layanan Kesehatan BPJS', code: 'bpjs', target: 0, anggaran: 50000000000 },
         { nama: 'Penanganan Stunting', code: 'stunting', target: 0, anggaran: 10000000000 },
@@ -75,6 +82,8 @@ async function main() {
     {
       namaProgram: 'Berani Sejahtera',
       deskripsi: 'Stabilitas ekonomi dan pangan.',
+      dinas: 'Dinas Sosial',
+      usernameKadis: 'kadis_sosial',
       subPrograms: [
         { nama: 'Jaminan Harga Bahan Pokok', code: 'harga_pokok', target: 0, anggaran: 10000000000 },
         { nama: 'Program Pangan Daerah (PANADA)', code: 'panada', target: 0, anggaran: 15000000000 },
@@ -86,6 +95,8 @@ async function main() {
     {
       namaProgram: 'Berani Menyala',
       deskripsi: 'Akses listrik dan internet merata.',
+      dinas: 'Dinas ESDM',
+      usernameKadis: 'kadis_esdm',
       subPrograms: [
         { nama: 'Jaminan Internet Desa (Blank Spot)', code: 'internet', target: 686, anggaran: 30000000000 },
         { nama: 'Listrik Masuk Desa & PJU', code: 'listrik', target: 0, anggaran: 40000000000 },
@@ -95,6 +106,8 @@ async function main() {
     {
       namaProgram: 'Berani Lancar',
       deskripsi: 'Konektivitas infrastruktur jalan dan jembatan.',
+      dinas: 'Dinas Bina Marga',
+      usernameKadis: 'kadis_binamarga',
       subPrograms: [
         { nama: 'Peningkatan Konektivitas Antarwilayah', code: 'konektivitas', target: 0, anggaran: 50000000000 },
         { nama: 'Jalan Penghubung Barat - Timur', code: 'jalan_trans', target: 0, anggaran: 80000000000 },
@@ -107,6 +120,8 @@ async function main() {
     {
       namaProgram: 'Berani Makmur',
       deskripsi: 'Kesejahteraan petani dan nelayan.',
+      dinas: 'Dinas Pertanian',
+      usernameKadis: 'kadis_pertanian',
       subPrograms: [
         { nama: 'Program Petani Milenial', code: 'petani_milenial', target: 0, anggaran: 5000000000 },
         { nama: 'Modernisasi Alsintan & Pupuk', code: 'alsintan', target: 0, anggaran: 20000000000 },
@@ -119,6 +134,8 @@ async function main() {
     {
       namaProgram: 'Berani Berkah',
       deskripsi: 'Kehidupan beragama yang harmonis.',
+      dinas: 'Biro Kesra',
+      usernameKadis: 'karo_kesra',
       subPrograms: [
         { nama: 'Sulteng Berjamaah', code: 'sulteng_berjamaah', target: 0, anggaran: 2000000000 },
         { nama: 'Insentif Tokoh Agama & Adat', code: 'insentif_agama', target: 0, anggaran: 10000000000 },
@@ -129,6 +146,8 @@ async function main() {
     {
       namaProgram: 'Berani Harmoni',
       deskripsi: 'Pariwisata, budaya, dan ekonomi kreatif.',
+      dinas: 'Dinas Pariwisata',
+      usernameKadis: 'kadis_pariwisata',
       subPrograms: [
         { nama: 'Wisata Desa & Geopark', code: 'wisata', target: 0, anggaran: 10000000000 },
         { nama: 'Pelestarian Budaya & Bahasa', code: 'budaya', target: 0, anggaran: 3000000000 },
@@ -140,6 +159,8 @@ async function main() {
     {
       namaProgram: 'Berani Berintegritas',
       deskripsi: 'Reformasi birokrasi dan pelayanan publik.',
+      dinas: 'Inspektorat',
+      usernameKadis: 'inspektur_daerah',
       subPrograms: [
         { nama: 'Tim Gaspoll (Call Center)', code: 'gaspoll', target: 0, anggaran: 1000000000 },
         { nama: 'Super Apps Si-Berani', code: 'super_apps', target: 0, anggaran: 5000000000 },
@@ -149,9 +170,9 @@ async function main() {
     }
   ];
 
-  const allPrograms = [beraniCerdas, ...otherPrograms];
+  console.log(`🚀 Menyiapkan ${allProgramsData.length} Program Kerja...`);
 
-  for (const prog of allPrograms) {
+  for (const prog of allProgramsData) {
     const programDB = await prisma.programKerja.create({
       data: {
         namaProgram: prog.namaProgram,
@@ -160,10 +181,10 @@ async function main() {
       }
     });
 
-    console.log(`🚀 Program: ${prog.namaProgram}`);
+    console.log(`\n📂 [PROGRAM] ${prog.namaProgram} (ID: ${programDB.id})`);
 
     for (const sub of prog.subPrograms) {
-      const subProgramDB = await prisma.subProgramKerja.create({
+      await prisma.subProgramKerja.create({
         data: {
           programKerjaId: programDB.id,
           namaSubProgram: sub.nama,
@@ -172,46 +193,54 @@ async function main() {
           anggaran: BigInt(sub.anggaran)
         }
       });
+    }
+
+    await prisma.user.create({
+      data: {
+        username: prog.usernameKadis,
+        password: password,
+        role: 'Kepala Dinas',
+        dinas: prog.dinas,
+        kontak: '08123456789',
+        programKerjaId: programDB.id 
+      }
+    });
+    console.log(`   👤 Kadis: ${prog.usernameKadis}`);
+
+    for (let i = 1; i <= 5; i++) {
+      const dinasSlug = slugify(prog.dinas.replace('Dinas ', '').replace('Biro ', ''));
+      const staffUsername = `staff_${dinasSlug}_${i}`;
 
       await prisma.user.create({
         data: {
-          username: `kadis_${sub.code}`,
-          password: password,
-          role: 'Kepala Dinas',
-          kontak: '08123456789',
-          subProgramId: subProgramDB.id
-        }
-      });
-
-      await prisma.user.create({
-        data: {
-          username: `staff_${sub.code}`,
+          username: staffUsername,
           password: password,
           role: 'Staff',
+          dinas: prog.dinas,
           kontak: '08123456789',
-          subProgramId: subProgramDB.id
+          programKerjaId: programDB.id 
         }
       });
-
-      console.log(`   - Sub: ${sub.nama}`);
     }
+    console.log(`   👥 Dibuatkan 5 Staff untuk ${prog.dinas}`);
   }
 
-  // Create User Gubernur
   await prisma.user.create({
     data: {
       username: 'gubernur',
       password: password,
       role: 'Gubernur',
+      dinas: 'Kantor Gubernur',
       kontak: '0811111111',
-      subProgramId: null
+      programKerjaId: null
     }
   });
 
   console.log('\n==============================================');
   console.log('✅ SEEDING SELESAI!');
   console.log('🔑 Password Default: 123');
-  console.log('👤 User Gubernur: gubernur');
+  console.log(`📊 Total Program: ${allProgramsData.length}`);
+  console.log('👤 Akun Gubernur: gubernur');
   console.log('==============================================');
 }
 

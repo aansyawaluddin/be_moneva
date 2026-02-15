@@ -108,123 +108,187 @@ const monitoringController = {
     // MONITORING DETAIL
     getMonitoringDetail: async (req, res) => {
         try {
-            const { subProgramId } = req.params;
-            const subProgram = await prisma.subProgramKerja.findUnique({
-                where: { id: Number(subProgramId) },
+            const { programSlug, subProgramSlug } = req.params;
+
+            const subProgram = await prisma.subProgramKerja.findFirst({
+                where: {
+                    slug: subProgramSlug,
+                    programKerja: {
+                        slug: programSlug
+                    }
+                },
                 include: { programKerja: true }
             });
 
-            if (!subProgram) return res.status(404).json({ msg: "Sub Program tidak ditemukan" });
+            if (!subProgram) {
+                return res.status(404).json({ msg: "Data Sub Program tidak ditemukan." });
+            }
 
+            const subProgramId = subProgram.id;
             const nameLower = subProgram.namaSubProgram.toLowerCase();
+
             let data = [];
             let type = "";
 
+            // A. BEASISWA
             if (nameLower.includes('beasiswa')) {
                 type = "beasiswa";
                 const raw = await prisma.realisasiBeasiswa.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, nama: item.namaPenerima, registrasi: item.noRegistrasi,
-                    kampus: item.institusiTujuan, kabupaten: item.kabupaten,
-                    nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    nama: item.namaPenerima,
+                    registrasi: item.noRegistrasi,
+                    kampus: item.institusiTujuan,
+                    kabupaten: item.kabupaten,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // B. BOSDA / OPERASIONAL
             } else if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
                 type = "bosda";
                 const raw = await prisma.realisasiBosda.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, sekolah: item.namaSekolah, kabupaten: item.kabupatenKota,
-                    siswa: item.jumlahSiswa, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    sekolah: item.namaSekolah,
+                    kabupaten: item.kabupatenKota,
+                    siswa: item.jumlahSiswa,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // C. SPP / MISKIN
             } else if (nameLower.includes('spp') || nameLower.includes('miskin')) {
                 type = "spp";
                 const raw = await prisma.realisasiSpp.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, sekolah: item.namaSekolah, siswa: item.namaSiswa || '-',
-                    kabupaten: item.kabupatenKota, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    sekolah: item.namaSekolah,
+                    siswa: `Jml Siswa: ${item.jumlahSiswa}`,
+                    kabupaten: item.kabupatenKota,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // D. PRAKERIN
             } else if (nameLower.includes('prakerin') || nameLower.includes('uji kompetensi')) {
                 type = "prakerin";
                 const raw = await prisma.realisasiPrakerin.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, sekolah: item.namaSekolah, siswa: item.jumlahSiswa,
-                    kabupaten: item.kabupatenKota, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    sekolah: item.namaSekolah,
+                    siswa: `Jml Siswa: ${item.jumlahSiswa}`,
+                    kabupaten: item.kabupatenKota,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // E. DIGITALISASI / SARANA
             } else if (nameLower.includes('digital') || nameLower.includes('sarana')) {
                 type = "digital";
                 const raw = await prisma.realisasiDigital.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, sekolah: item.namaSekolah, barang: item.jenisBarang, unit: item.jumlahUnit,
-                    kabupaten: item.kabupatenKota, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    sekolah: item.namaSekolah,
+                    barang: item.jenisBarang,
+                    unit: item.jumlahUnit,
+                    kabupaten: item.kabupatenKota,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // F. VOKASI / PELATIHAN
             } else if (nameLower.includes('vokasi') || nameLower.includes('siap kerja')) {
                 type = "vokasi";
                 const raw = await prisma.realisasiVokasi.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, peserta: item.namaPeserta, nik: item.nik, pelatihan: item.jenisPelatihan,
-                    kabupaten: item.kabupatenKota, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    peserta: item.namaPeserta,
+                    nik: item.nik,
+                    pelatihan: item.jenisPelatihan,
+                    kabupaten: item.kabupatenKota,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // G. CAREER CENTER
             } else if (nameLower.includes('career') || nameLower.includes('karir')) {
                 type = "career";
                 const raw = await prisma.realisasiCareerCenter.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, kegiatan: item.namaKegiatan, lokasi: item.lokasi, tanggal: item.tanggalKegiatan,
-                    nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    kegiatan: item.namaKegiatan,
+                    lokasi: item.lokasi,
+                    tanggal: item.tanggalKegiatan,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
 
+                // H. SERAGAM
             } else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
                 type = "seragam";
                 const raw = await prisma.realisasiSeragam.findMany({
-                    where: { header: { subProgramId: Number(subProgramId), statusVerifikasi: 'Disetujui' } },
+                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'desc' } }
                 });
                 data = raw.map(item => ({
-                    id: item.id, sekolah: item.namaSekolah, siswa: item.jumlahSiswa,
-                    kabupaten: item.kabupatenKota, nominal: item.nominal, tanggalCair: item.header.tanggalVerifikasi
+                    id: item.id,
+                    sekolah: item.namaSekolah,
+                    siswa: `Jml Siswa: ${item.jumlahSiswa}`,
+                    kabupaten: item.kabupatenKota,
+                    nominal: item.nominal,
+                    tanggalCair: item.header.tanggalVerifikasi
                 }));
+
             } else {
-                return res.status(400).json({ msg: "Tipe monitoring untuk sub program ini belum tersedia." });
+                // Fallback jika tidak ada keyword yang cocok
+                return res.json({
+                    status: "success",
+                    msg: "Belum ada data detail untuk tipe sub program ini.",
+                    program: subProgram.programKerja.namaProgram,
+                    subProgram: subProgram.namaSubProgram,
+                    data: []
+                });
             }
 
+            // --- RESPONSE FINAL ---
             res.json({
                 status: "success",
                 program: subProgram.programKerja.namaProgram,
+                programSlug: subProgram.programKerja.slug,
                 subProgram: subProgram.namaSubProgram,
+                subProgramSlug: subProgram.slug,
                 type: type,
+                totalData: data.length,
                 data: data
             });
 

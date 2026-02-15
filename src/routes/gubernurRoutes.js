@@ -10,7 +10,10 @@ router.use(verifyToken, verifyGovernor);
 
 // Program Kerja
 router.post('/program', gubernurController.createProgram);
+
 router.get('/program', programKerjaController.getAllPrograms);
+router.get('/program/:slug', programKerjaController.getProgramBySlug);
+
 router.get('/program/:id', programKerjaController.getProgramById);
 router.put('/program/:id', gubernurController.updateProgram);
 router.delete('/program/:id', gubernurController.deleteProgram);
@@ -28,6 +31,6 @@ router.get('/monitoring/stats', monitoringController.getMonitoringStats);
 router.get('/monitoring/wilayah', monitoringWilayahController.getMonitoringWilayah);
 
 // MONITORING DETAIL
-router.get('/monitoring/detail/:subProgramId', monitoringController.getMonitoringDetail);
+router.get('/program/:programSlug/subProgram/:subProgramSlug', monitoringController.getMonitoringDetail);
 
 export default router;

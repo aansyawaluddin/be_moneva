@@ -14,8 +14,8 @@ router.get('/jobdesk', staffController.getJobdesk);
 router.post('/upload', upload.single('file'), staffController.uploadLaporan);
 
 // History
-router.get('/history', staffController.getMyUploads);
+router.get('/jobdesk/:slug', staffController.getMyUploads);
 
-router.get('/laporan/:id', staffController.getDetailLaporan)
+router.get('/jobdesk/:slug/:id', staffController.getDetailLaporan)
 
 export default router;

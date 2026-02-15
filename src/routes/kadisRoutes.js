@@ -8,13 +8,15 @@ router.use(verifyToken, verifyProgramAccess);
 
 // Jobdesk
 router.get('/jobdesk', kadisController.getJobdesk);
+router.get('/jobdesk/:slug', kadisController.getDataBySubProgram);
 
 // Inbox
 router.get('/inbox', kadisController.getInboxVerifikasi);
 
-router.get('/laporan/:id', kadisController.getDetailLaporan);
+router.get('/inbox/:id', kadisController.getDetailLaporan);
 
 // Action
-router.put('/verifikasi/:id', kadisController.verifikasiLaporan);
+router.put('/verifikasi/approve/:id', kadisController.approveLaporan);
+router.put('/verifikasi/reject/:id', kadisController.rejectLaporan);
 
 export default router;
