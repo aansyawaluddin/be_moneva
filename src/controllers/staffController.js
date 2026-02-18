@@ -58,7 +58,13 @@ const staffController = {
             const userProgramId = req.user.programKerjaId;
 
             if (!file) return res.status(400).json({ msg: "File Excel wajib diupload" });
-            if (!subProgramId) return res.status(400).json({ msg: "Sub Program ID wajib dipilih" });
+
+            if (!subProgramId || isNaN(Number(subProgramId))) {
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                return res.status(400).json({
+                    msg: "Sub Program ID kosong atau tidak valid. Pastikan urutan pengiriman FormData benar (Teks/ID ditaruh di atas, File ditaruh paling bawah)."
+                });
+            }
 
             const subProgramCheck = await prisma.subProgramKerja.findFirst({
                 where: {

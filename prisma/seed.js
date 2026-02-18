@@ -42,11 +42,8 @@ async function main() {
   const password = await bcrypt.hash('123', salt);
 
   // ============================================================
-  // DATA MASTER SESUAI REQUEST
+  // DATA MASTER SESUAI EXCEL (TIDAK ADA NAMA YANG DIPOTONG)
   // ============================================================
-
-  // Kita gabungkan data Berani Cerdas + Other Programs menjadi satu array
-  // Dan kita berikan mapping Dinas & Username Kadis manual agar rapi.
 
   const allProgramsData = [
     {
@@ -55,14 +52,18 @@ async function main() {
       dinas: 'Dinas Pendidikan',
       usernameKadis: 'kadis_pendidikan',
       subPrograms: [
-        { nama: 'Pemberian BOSDA bagi SMA, SMK dan SLB', code: 'bosda', target: 500, anggaran: 42000000000 },
-        { nama: 'Pemberian biaya SPP bagi siswa miskin di sekolah swasta', code: 'spp', target: 1000, anggaran: 5000000000 },
-        { nama: 'Biaya uji kompetensi dan biaya prakerin SMK', code: 'prakerin', target: 3000, anggaran: 3000000000 },
-        { nama: 'Pemberian beasiswa dan bantuan pendidikan', code: 'beasiswa', target: 28000, anggaran: 266120507972 },
-        { nama: 'Perbaikan sarana digital SMA/SMK', code: 'digital', target: 100, anggaran: 15000000000 },
-        { nama: 'Pelatihan Vokasional Siap Kerja', code: 'vokasi', target: 5000, anggaran: 10000000000 },
-        { nama: 'Sulteng Career Center', code: 'career', target: 1, anggaran: 2000000000 },
-        { nama: 'Bantuan Seragam Sekolah (SMA)', code: 'seragam', target: 10000, anggaran: 6500000000 }
+        { nama: 'Pemberian BOSDA bagi SMA, SMK dan SLB negeri maupun swasta', target: 449, anggaran: 41478600000 },
+        { nama: 'Pemberian biaya SPP bagi siswa miskin di sekolah swasta SMA/SMK/SLB', target: 1406, anggaran: 3120400000 },
+        { nama: 'Pemberian beasiswa bagi siswa cerdas, istimewa dan bakat istimewa', target: 0, anggaran: 0 },
+        { nama: 'Biaya uji kompetensi dan biaya prakerin bagi siswa SMK negeri maupun swasta', target: 148, anggaran: 27135331804 },
+        { nama: 'Pemberian beasiswa dan bantuan biaya pendidikan bagi mahasiswa miskin dan/atau berprestasi', target: 28016, anggaran: 266120507972 },
+        { nama: 'Pemberian bantuan biaya pendidikan bagi mahasiswa aktif miskin dan/atau berprestasi dalam masa penyelesaian studi', target: 0, anggaran: 0 },
+        { nama: 'Pemberian beasiswa dan bantuan biaya pendidikan bagi guru, ASN serta pendidikan profesi', target: 112, anggaran: 324933676000 },
+        { nama: 'Perbaikan dan peningkatan sarana dan prasarana pendidikan berbasis Digital SMA/SMK', target: 0, anggaran: 0 },
+        { nama: 'Pelatihan “Vokasional Siap Kerja” bagi Generasi Milenial dan Gen-Z', target: 50, anggaran: 429334900 },
+        { nama: 'Sulteng Career Center', target: 200, anggaran: 131316100 },
+        { nama: 'Peningkatan minat baca dan budaya literasi masyarakat dengan mendorong kenaikan Indeks Pembangunn Literasi Masyarakat (IPLM)', target: 100, anggaran: 1371863571 },
+        { nama: 'Bantuan Pemberian Seragam Sekolah', target: 11285, anggaran: 6438350000 }
       ]
     },
     {
@@ -71,12 +72,13 @@ async function main() {
       dinas: 'Dinas Kesehatan',
       usernameKadis: 'kadis_kesehatan',
       subPrograms: [
-        { nama: 'Integrasi Layanan Kesehatan BPJS', code: 'bpjs', target: 0, anggaran: 50000000000 },
-        { nama: 'Penanganan Stunting', code: 'stunting', target: 0, anggaran: 10000000000 },
-        { nama: 'Pemeriksaan Kesehatan Gratis', code: 'cek_kesehatan', target: 0, anggaran: 5000000000 },
-        { nama: 'Peningkatan Layanan RS Undata & Madani', code: 'rs_rujukan', target: 0, anggaran: 20000000000 },
-        { nama: 'Jaminan Kesehatan Masyarakat Miskin (Naseha Kami)', code: 'naseha_kami', target: 0, anggaran: 15000000000 },
-        { nama: 'Integrasi Layanan RS Kota Palu', code: 'rs_palu', target: 0, anggaran: 5000000000 }
+        { nama: 'Integrasi layanan kesehatan bersama BPJS, berobat Gratis menggunakan KTP', target: 0, anggaran: 0 },
+        { nama: 'Pencegahan stunting', target: 0, anggaran: 0 },
+        { nama: 'Dukungan terhadap pelaksanaan pemeriksaan kesehatan gratis', target: 0, anggaran: 0 },
+        { nama: 'Peningkatan kualitas layanan kesehatan pada Rumah Sakit Umum UNDATA dan MADANI', target: 4, anggaran: 0 },
+        { nama: 'Mendorong Rumah Sakit Undata dan Rumah Sakit Madani menjadi rumah sakit rujukan bertaraf internasional', target: 5, anggaran: 0 },
+        { nama: 'Jaminan layanan kesehatan bagi masyarakat miskin (Naseha Kami)', target: 100, anggaran: 0 },
+        { nama: 'Integrasi layanan kesehatan dengan rumah sakit lainnya di Kota Palu', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -85,22 +87,12 @@ async function main() {
       dinas: 'Dinas Sosial',
       usernameKadis: 'kadis_sosial',
       subPrograms: [
-        { nama: 'Jaminan Harga Bahan Pokok', code: 'harga_pokok', target: 0, anggaran: 10000000000 },
-        { nama: 'Program Pangan Daerah (PANADA)', code: 'panada', target: 0, anggaran: 15000000000 },
-        { nama: 'Program Usaha Ekonomi Produktif (UEP)', code: 'uep', target: 0, anggaran: 8000000000 },
-        { nama: 'Revitalisasi Rutilahu', code: 'rutilahu', target: 0, anggaran: 25000000000 },
-        { nama: 'Pelatihan Kewirausahaan & UMKM', code: 'umkm', target: 0, anggaran: 5000000000 }
-      ]
-    },
-    {
-      namaProgram: 'Berani Menyala',
-      deskripsi: 'Akses listrik dan internet merata.',
-      dinas: 'Dinas ESDM',
-      usernameKadis: 'kadis_esdm',
-      subPrograms: [
-        { nama: 'Jaminan Internet Desa (Blank Spot)', code: 'internet', target: 686, anggaran: 30000000000 },
-        { nama: 'Listrik Masuk Desa & PJU', code: 'listrik', target: 0, anggaran: 40000000000 },
-        { nama: 'Peningkatan PLTA Sulewana Poso', code: 'plta', target: 0, anggaran: 10000000000 }
+        { nama: 'Jaminan harga bahan pokok murah dan stabil', target: 0, anggaran: 0 },
+        { nama: 'Menjamin kebutuhan dasar Masyarakat miskin melalui Program Pangan Daerah (PANADA)', target: 0, anggaran: 0 },
+        { nama: 'Graduasi masyarakat miskin melalui Program Usaha Ekonomi Produktif (UEP) Graduasi', target: 15550, anggaran: 19757900000 },
+        { nama: 'Revitalisasi Rutilahu', target: 17, anggaran: 332271800 },
+        { nama: 'Program pelatihan kewirausahaan dan pengembangan UMKM', target: 0, anggaran: 0 },
+        { nama: 'Mendukung Makan Bergizi Gratis (MBG)', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -109,12 +101,24 @@ async function main() {
       dinas: 'Dinas Bina Marga',
       usernameKadis: 'kadis_binamarga',
       subPrograms: [
-        { nama: 'Peningkatan Konektivitas Antarwilayah', code: 'konektivitas', target: 0, anggaran: 50000000000 },
-        { nama: 'Jalan Penghubung Barat - Timur', code: 'jalan_trans', target: 0, anggaran: 80000000000 },
-        { nama: 'Rekonstruksi Jalan (MYC)', code: 'jalan_myc', target: 0, anggaran: 200000000000 },
-        { nama: 'Kawasan Agropolitan', code: 'agropolitan', target: 0, anggaran: 15000000000 },
-        { nama: 'Gawalise International Stadium (GIS)', code: 'gis', target: 0, anggaran: 150000000000 },
-        { nama: 'Air Bersih Pedesaan', code: 'air_bersih', target: 0, anggaran: 10000000000 }
+        { nama: 'Pembangunan/peningkatan 1.000 kilometer jalan desa', target: 0, anggaran: 0 },
+        { nama: 'Peningkatan konektivitas penghubung antara wilayah barat Sulawesi Tengah menuju wilayah timur Sulawesi Tengah dengan mendukung konektivitas Tambu-Kasimba', target: 4, anggaran: 12845446121 },
+        { nama: 'Melaksanakan rekonstruksi pemeliharaan dan pembangunan beberapa ruas jalan melalui paket Multi Year Contract (MYC) yang berlokasi di Kabupaten/Kota', target: 26, anggaran: 0 },
+        { nama: 'Pembangunan Kawasan Agropolitan kawasan perikanan dan hilirisasi Tongkol Cakalang Tuna (TCT) kawasan sentra hirilisasi rumput laut kawasan afirmasi kawasan konservasi dan rawan bencana dan kawasan pertumbuhan', target: 0, anggaran: 0 },
+        { nama: 'Peningkatan konektivitas penghubung antara Kabupaten Banggai Kepulauan dan Kabupaten Banggai Laut', target: 18, anggaran: 668964006 },
+        { nama: 'Jaminan ketersediaan air bersih bagi desa-desa yang belum mempunyai akses air bersih', target: 0, anggaran: 7097998590 },
+        { nama: 'Jaminan ketersediaan Drainase', target: 29176, anggaran: 28179232000 }
+      ]
+    },
+    {
+      namaProgram: 'Berani Menyala',
+      deskripsi: 'Akses listrik dan internet merata.',
+      dinas: 'Dinas ESDM',
+      usernameKadis: 'kadis_esdm',
+      subPrograms: [
+        { nama: 'Jaminan ketersediaan jaringan internet bagi desa yang masih termasuk dalam wilayah blank spot,', target: 0, anggaran: 0 },
+        { nama: 'Jaminan ketersediaan akses listrik bagi masyarakat miskin dan penyediaan lampu jalan bagi daerah yang belum terjangkau penerangan jalan umum', target: 0, anggaran: 0 },
+        { nama: 'Peningkatan kualitas layanan Pembangkit Listrik Tenaga Air (PLTA)Sulewana Poso agar dapat menjamin ketersediaan pasokan listrik Sulawesi Tengah', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -123,12 +127,17 @@ async function main() {
       dinas: 'Dinas Pertanian',
       usernameKadis: 'kadis_pertanian',
       subPrograms: [
-        { nama: 'Program Petani Milenial', code: 'petani_milenial', target: 0, anggaran: 5000000000 },
-        { nama: 'Modernisasi Alsintan & Pupuk', code: 'alsintan', target: 0, anggaran: 20000000000 },
-        { nama: 'Program Resi Gudang', code: 'resi_gudang', target: 0, anggaran: 5000000000 },
-        { nama: 'Bantuan Alat Tangkap Nelayan', code: 'nelayan', target: 0, anggaran: 10000000000 },
-        { nama: 'Jaminan Sosial Petani & Nelayan', code: 'jamsos_tani', target: 0, anggaran: 15000000000 },
-        { nama: 'Pembangunan Sentra Pangan', code: 'sentra_pangan', target: 0, anggaran: 10000000000 }
+        { nama: 'Berani Produktivitas melalui peningkatan produktivitas padi sebesar 5-6 Ton/Ha GKG', target: 0, anggaran: 0 },
+        { nama: 'Berani Tangkap Banyak melalui pemberian bantuan alat tangkap nelayan', target: 0, anggaran: 0 },
+        { nama: 'Program Petani Milenial', target: 0, anggaran: 0 },
+        { nama: 'Pemerintah Provinsi sebagai wakil pemerintahpusat di daerah memastikan ketersediaan Benih unggul, Pupuk serta mendorong medernisasi Alsinta', target: 0, anggaran: 0 },
+        { nama: 'Mendukung Program resi gudang', target: 0, anggaran: 0 },
+        { nama: 'Jaminan sosial bagi petani, nelayan dan pekerja lainnya', target: 0, anggaran: 0 },
+        { nama: 'Berani Panen Raya, hasil panen melimpah dengan jaminan harga jual tinggi bagi petani', target: 0, anggaran: 0 },
+        { nama: 'Pembangunan sentra pangan berbasis kawasan dan masyarakat', target: 0, anggaran: 0 },
+        { nama: 'Berani membangun lingkungan yang berkualitas dan berkelanjutan', target: 0, anggaran: 0 },
+        { nama: 'Berani Inseminasi buatan untuk ternak', target: 0, anggaran: 0 },
+        { nama: 'Berani KUR melalui pemberian modal usaha dengan bunga 0%', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -137,10 +146,12 @@ async function main() {
       dinas: 'Biro Kesra',
       usernameKadis: 'karo_kesra',
       subPrograms: [
-        { nama: 'Sulteng Berjamaah', code: 'sulteng_berjamaah', target: 0, anggaran: 2000000000 },
-        { nama: 'Insentif Tokoh Agama & Adat', code: 'insentif_agama', target: 0, anggaran: 10000000000 },
-        { nama: 'Penyetaraan Pesantren & Madrasah', code: 'pesantren', target: 0, anggaran: 5000000000 },
-        { nama: 'Perbaikan Sarana Keagamaan', code: 'sarana_agama', target: 0, anggaran: 15000000000 }
+        { nama: 'Sulteng Berjamaah', target: 0, anggaran: 0 },
+        { nama: 'Sulteng Mengaji', target: 0, anggaran: 0 },
+        { nama: 'Insentif bagi guru mengaji, marbot, pendeta/tokoh agama dan pemangku adat', target: 0, anggaran: 0 },
+        { nama: 'Penyetaraan status pesantren, madrasah dan sekolah keagamaan', target: 0, anggaran: 0 },
+        { nama: 'Perbaikan sarana prasarana keagamaan', target: 443, anggaran: 34208247425 },
+        { nama: 'Penguatan peran FKUB dalam kehidupan beragama dan bermasyarakat', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -149,11 +160,18 @@ async function main() {
       dinas: 'Dinas Pariwisata',
       usernameKadis: 'kadis_pariwisata',
       subPrograms: [
-        { nama: 'Wisata Desa & Geopark', code: 'wisata', target: 0, anggaran: 10000000000 },
-        { nama: 'Pelestarian Budaya & Bahasa', code: 'budaya', target: 0, anggaran: 3000000000 },
-        { nama: 'Sulteng Creative Hub', code: 'creative', target: 0, anggaran: 5000000000 },
-        { nama: 'Inkubasi UMKM & Wirausaha Baru', code: 'inkubasi', target: 20000, anggaran: 10000000000 },
-        { nama: 'Berani Investasi', code: 'investasi', target: 0, anggaran: 2000000000 }
+        { nama: 'Berani Wisata', target: 0, anggaran: 0 },
+        { nama: 'Berani Ekonomi Kreatif melalui Sulteng Creative Center (SCC)', target: 0, anggaran: 0 },
+        { nama: 'Pembentukan Sulteng Creative Center serta penyusunan roadmap SCC', target: 0, anggaran: 0 },
+        { nama: 'Berani 20.000 Wirausaha Baru', target: 0, anggaran: 0 },
+        { nama: 'Berani Carier center', target: 0, anggaran: 0 },
+        { nama: 'Berani Berbudaya menanamkan nilai–nilai kearifan lokal dalam Pemerintahan', target: 0, anggaran: 0 },
+        { nama: 'Berani Lestari: Berani menjaga dan melesetarikan nilai-nilai kearifan lokal', target: 0, anggaran: 0 },
+        { nama: 'Berani Produktif dan Berekspresi: Berani mengembangkan dan memanfaatkan obyek Pemajuan Kebudayaan dan cagar Budaya Bernilai ekonomi', target: 0, anggaran: 0 },
+        { nama: 'Berani BumdesSuksesmemfasilitasi Bumdes berbadan hukum melaksanakan pelatihan, penguatan bumdes, mengikutkan bumdes dalam setiap even', target: 0, anggaran: 0 },
+        { nama: 'Berani berinvestasi mempermudah proses investasi dengan layanan cepat, transparan dan berbasis digital', target: 0, anggaran: 0 },
+        { nama: 'Berani bermitradalam rangka mendukung UMKM untuk naik kelas serta dukungan pelaksanaan Koperasi Merah Putih', target: 0, anggaran: 0 },
+        { nama: 'Pembangunan/peningkatan sarana prasarana olahraga dengan mendukung pembangunan stadion olahraga atau sport center', target: 0, anggaran: 0 }
       ]
     },
     {
@@ -162,10 +180,11 @@ async function main() {
       dinas: 'Inspektorat',
       usernameKadis: 'inspektur_daerah',
       subPrograms: [
-        { nama: 'Tim Gaspoll (Call Center)', code: 'gaspoll', target: 0, anggaran: 1000000000 },
-        { nama: 'Super Apps Si-Berani', code: 'super_apps', target: 0, anggaran: 5000000000 },
-        { nama: 'Budaya Kerja Birokrasi', code: 'birokrasi', target: 0, anggaran: 1000000000 },
-        { nama: 'Bantuan Keuangan Desa', code: 'keuangan_desa', target: 0, anggaran: 50000000000 }
+        { nama: 'Tim Gaspoll(Gerakan Aksi Satset Pemerintah Optimal Layani Langsung) – Call Center, Siaga Laporan CommandCenter', target: 0, anggaran: 0 },
+        { nama: 'Implementasi Sistem Administrasi Layanan Publik Terintegrasi (Super Aps Si-Berani) dan peningkatan kualitas penerapan SPBE', target: 0, anggaran: 0 },
+        { nama: 'Budaya kerja birokrasi yang Bersih, Akuntabel dan Inovatif (Berani)', target: 0, anggaran: 0 },
+        { nama: 'Co-Working Space (CWS) bagi ASN', target: 0, anggaran: 0 },
+        { nama: 'Bantuan keuangan bagi pemerintah desa', target: 0, anggaran: 0 }
       ]
     }
   ];
@@ -202,7 +221,7 @@ async function main() {
         role: 'Kepala Dinas',
         dinas: prog.dinas,
         kontak: '08123456789',
-        programKerjaId: programDB.id 
+        programKerjaId: programDB.id
       }
     });
     console.log(`   👤 Kadis: ${prog.usernameKadis}`);
@@ -218,7 +237,7 @@ async function main() {
           role: 'Staff',
           dinas: prog.dinas,
           kontak: '08123456789',
-          programKerjaId: programDB.id 
+          programKerjaId: programDB.id
         }
       });
     }

@@ -136,15 +136,19 @@ const monitoringController = {
                 const raw = await prisma.realisasiBeasiswa.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
                     nama: item.namaPenerima,
-                    registrasi: item.noRegistrasi,
+                    nik: item.nik || '-',
+                    nim: item.nim || '-',
                     kampus: item.institusiTujuan,
                     kabupaten: item.kabupaten,
+                    alamat: item.alamat || '-',
+                    jalur: item.jalur || '-',
                     nominal: item.nominal,
+                    kontak: item.kontakPenerima || '-',
                     tanggalCair: item.header.tanggalVerifikasi
                 }));
 
@@ -154,7 +158,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiBosda.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -171,7 +175,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiSpp.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -188,7 +192,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiPrakerin.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -205,7 +209,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiDigital.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -223,7 +227,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiVokasi.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -241,7 +245,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiCareerCenter.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,
@@ -258,7 +262,7 @@ const monitoringController = {
                 const raw = await prisma.realisasiSeragam.findMany({
                     where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
                     include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'desc' } }
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => ({
                     id: item.id,

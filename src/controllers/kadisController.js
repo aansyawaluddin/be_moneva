@@ -118,7 +118,7 @@ const kadisController = {
         }
     },
 
-    // 2. INBOX VERIFIKASI (Semua laporan masuk dari 5 staff di program ini)
+    // INBOX VERIFIKASI 
     getInboxVerifikasi: async (req, res) => {
         try {
             const { status } = req.query;

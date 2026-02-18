@@ -62,8 +62,8 @@ model ProgramKerja {
 model SubProgramKerja {
   id             Int          @id @default(autoincrement())
   programKerjaId Int          @map("program_kerja_id")
-  namaSubProgram String?      @map("nama_sub_program")
-  slug           String       @unique
+  namaSubProgram String?      @map("nama_sub_program") @db.Text
+  slug           String       @unique @db.VarChar(255)
   target         Int
   anggaran       BigInt
   
@@ -157,10 +157,12 @@ model RealisasiBeasiswa {
   id              Int           @id @default(autoincrement())
   dataRealisasiId Int           @map("data_realisasi_id")
   namaPenerima    String        @map("nama_penerima")
-  noRegistrasi    String?       @map("no_registrasi") 
+  nik             String?       @map("nik")             
+  nim             String?       @map("nim")             
   alamat          String?       @db.Text
   kabupaten       String?       @db.Text
   institusiTujuan String?       @map("institusi_tujuan")
+  jalur           String?       @map("jalur")
   nominal         Decimal?      @db.Decimal(15, 2)
   kontakPenerima  String?       @map("kontak_penerima")
   header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)

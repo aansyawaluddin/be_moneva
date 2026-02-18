@@ -13,7 +13,7 @@ router.get('/jobdesk/:slug', kadisController.getDataBySubProgram);
 // Inbox
 router.get('/inbox', kadisController.getInboxVerifikasi);
 
-router.get('/inbox/:id', kadisController.getDetailLaporan);
+router.get('/laporan/:id', kadisController.getDetailLaporan);
 
 // Action
 router.put('/verifikasi/approve/:id', kadisController.approveLaporan);
