@@ -179,7 +179,8 @@ const staffController = {
                     detailDigital: true,
                     detailVokasi: true,
                     detailCareer: true,
-                    detailSeragam: true
+                    detailSeragam: true,
+                    detailIplm: true 
                 }
             });
 
@@ -198,14 +199,29 @@ const staffController = {
             let detailItems = [];
             let tipeLaporan = "";
 
-            if (headerData.detailBosda.length > 0) { detailItems = headerData.detailBosda; tipeLaporan = "BOSDA"; }
-            else if (headerData.detailSpp.length > 0) { detailItems = headerData.detailSpp; tipeLaporan = "SPP"; }
-            else if (headerData.detailPrakerin.length > 0) { detailItems = headerData.detailPrakerin; tipeLaporan = "Prakerin"; }
-            else if (headerData.detailBeasiswa.length > 0) { detailItems = headerData.detailBeasiswa; tipeLaporan = "Beasiswa"; }
-            else if (headerData.detailDigital.length > 0) { detailItems = headerData.detailDigital; tipeLaporan = "Digitalisasi"; }
-            else if (headerData.detailVokasi.length > 0) { detailItems = headerData.detailVokasi; tipeLaporan = "Vokasi"; }
-            else if (headerData.detailCareer.length > 0) { detailItems = headerData.detailCareer; tipeLaporan = "Career Center"; }
-            else if (headerData.detailSeragam.length > 0) { detailItems = headerData.detailSeragam; tipeLaporan = "Seragam"; }
+            if (headerData.detailBosda?.length > 0) { detailItems = headerData.detailBosda; tipeLaporan = "BOSDA"; }
+            else if (headerData.detailSpp?.length > 0) { detailItems = headerData.detailSpp; tipeLaporan = "SPP"; }
+            else if (headerData.detailPrakerin?.length > 0) { detailItems = headerData.detailPrakerin; tipeLaporan = "Prakerin"; }
+            else if (headerData.detailBeasiswa?.length > 0) { detailItems = headerData.detailBeasiswa; tipeLaporan = "Beasiswa"; }
+            else if (headerData.detailDigital?.length > 0) { detailItems = headerData.detailDigital; tipeLaporan = "Digitalisasi"; }
+            else if (headerData.detailVokasi?.length > 0) { detailItems = headerData.detailVokasi; tipeLaporan = "Vokasi"; }
+            else if (headerData.detailCareer?.length > 0) { detailItems = headerData.detailCareer; tipeLaporan = "Career Center"; }
+            else if (headerData.detailSeragam?.length > 0) { detailItems = headerData.detailSeragam; tipeLaporan = "Seragam"; }
+            else if (headerData.detailIplm?.length > 0) { detailItems = headerData.detailIplm; tipeLaporan = "IPLM"; } 
+
+            const parseNominal = (val) => val ? Number(val.toString()) : 0;
+
+            detailItems = detailItems.map(item => {
+                let formattedItem = { ...item };
+
+                if (tipeLaporan === "Prakerin") {
+                    formattedItem.nominal = parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta);
+                } else {
+                    formattedItem.nominal = parseNominal(item.nominal);
+                }
+
+                return formattedItem;
+            });
 
             const result = {
                 header: {

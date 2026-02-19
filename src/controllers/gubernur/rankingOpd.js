@@ -1,4 +1,4 @@
-import prisma from '../../utils/prisma.js'; 
+import prisma from '../../utils/prisma.js';
 
 const rankingOpdController = {
 
@@ -21,7 +21,7 @@ const rankingOpdController = {
                     subProgram: {
                         include: {
                             dataRealisasi: {
-                                where: { statusVerifikasi: 'Disetujui' }, 
+                                where: { statusVerifikasi: 'Disetujui' },
                                 include: {
                                     detailBeasiswa: true,
                                     detailBosda: true,
@@ -30,7 +30,8 @@ const rankingOpdController = {
                                     detailDigital: true,
                                     detailVokasi: true,
                                     detailCareer: true,
-                                    detailSeragam: true
+                                    detailSeragam: true,
+                                    detailIplm: true 
                                 }
                             }
                         }
@@ -59,17 +60,38 @@ const rankingOpdController = {
                     sub.dataRealisasi.forEach(upload => {
                         const sumNominal = (items) => {
                             if (!items) return 0;
-                            return items.reduce((acc, curr) => acc + (Number(curr.nominal) || 0), 0);
+                            return items.reduce((acc, curr) => {
+                                const nilai = curr.nominal ? Number(curr.nominal.toString()) : 0;
+                                return acc + (isNaN(nilai) ? 0 : nilai);
+                            }, 0);
+                        };
+
+                        const sumPrakerin = (items) => {
+                            if (!items) return 0;
+                            return items.reduce((acc, curr) => {
+                                const uangNegeri = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0;
+                                const uangSwasta = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0;
+
+                                const totalNegeri = isNaN(uangNegeri) ? 0 : uangNegeri;
+                                const totalSwasta = isNaN(uangSwasta) ? 0 : uangSwasta;
+
+                                return acc + totalNegeri + totalSwasta;
+                            }, 0);
                         };
 
                         realisasiUang += sumNominal(upload.detailBeasiswa);
                         realisasiUang += sumNominal(upload.detailBosda);
                         realisasiUang += sumNominal(upload.detailSpp);
-                        realisasiUang += sumNominal(upload.detailPrakerin);
+
+                        realisasiUang += sumPrakerin(upload.detailPrakerin);
+
                         realisasiUang += sumNominal(upload.detailDigital);
+
                         realisasiUang += sumNominal(upload.detailVokasi);
+
                         realisasiUang += sumNominal(upload.detailCareer);
                         realisasiUang += sumNominal(upload.detailSeragam);
+                        realisasiUang += sumNominal(upload.detailIplm); 
                     });
 
                     opdStats[namaDinas].totalRealisasi += realisasiUang;
@@ -98,7 +120,7 @@ const rankingOpdController = {
             rankingArray = rankingArray.map((item, index) => {
                 delete item.rawPersentase;
                 return {
-                    peringkat: index + 1, 
+                    peringkat: index + 1,
                     ...item
                 };
             });

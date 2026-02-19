@@ -5,6 +5,7 @@ import prakerinProcessor from './prakerinProcessor.js';
 import digitalProcessor from './digitalProcessor.js';
 import vokasionalProcessor from './vokasionalProcessor.js';
 import carierCenterProcessor from './careerCenterProcessor.js';
+import iplmProcessor from './iplmProcessor.js'
 import seragamProcessor from './seragamProcessor.js';
 
 
@@ -14,8 +15,9 @@ const processorRegistry = {
     'spp': sppProcessor,
     'prakerin': prakerinProcessor,
     'digital': digitalProcessor,
-    'vokasional': vokasionalProcessor, 
+    'vokasional': vokasionalProcessor,
     'career': carierCenterProcessor,
+    'iplm': iplmProcessor,
     'seragam': seragamProcessor
 };
 
@@ -52,11 +54,15 @@ export const getProcessor = (subProgramName) => {
     else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
         foundKey = 'seragam';
     }
-    // 7. Cek BOSDA
+    // 7. Cek IPLM / Literasi / Minat Baca (BARU)
+    else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
+        foundKey = 'iplm';
+    }
+    // 8. Cek BOSDA
     else if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
         foundKey = 'bosda';
     }
-    // 8. Cek Beasiswa (Terakhir karena paling umum)
+    // 9. Cek Beasiswa (Terakhir karena paling umum)
     else if (nameLower.includes('beasiswa')) {
         foundKey = 'beasiswa';
     }

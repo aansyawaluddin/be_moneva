@@ -10,11 +10,10 @@ const process = async (tx, headerId, filePath) => {
 
     const detailData = dataExcel.map(row => ({
         dataRealisasiId: headerId,
-        namaPeserta: row['Nama Peserta'] || row['Nama'],
-        nik: String(row['NIK'] || row['KTP'] || '-'),
-        jenisPelatihan: row['Jenis Pelatihan'] || row['Pelatihan'] || '-',
-        kabupatenKota: row['Kabupaten'] || '-',
-        nominal: cleanCurrency(row['Nominal'] || row['Biaya'])
+        rincianKegiatan: String(row['Rincian Kegiatan'] || '-').trim(),
+        kabupatenKota: String(row['Kabupaten/Kota'] || row['Kabupaten'] || '-').trim(),
+        jumlahOrang: Number(row['Jumlah Orang']) || 0,
+        nominal: Number(cleanCurrency(row['Nominal'] || row['Biaya'])) || 0
     }));
 
     await tx.realisasiVokasi.createMany({ data: detailData });

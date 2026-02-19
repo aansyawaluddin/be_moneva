@@ -8,13 +8,16 @@ const process = async (tx, headerId, filePath) => {
 
     if (dataExcel.length === 0) throw new Error("File Excel Prakerin kosong");
 
-    const detailData = dataExcel.map(row => ({
-        dataRealisasiId: headerId,
-        namaSekolah: row['Nama Sekolah'] || row['Sekolah'],
-        jumlahSiswa: Number(row['Jumlah Siswa'] || row['Peserta']) || 0,
-        kabupatenKota: row['Kabupaten'] || '-',
-        nominal: cleanCurrency(row['Nominal'] || row['Biaya'])
-    }));
+    const detailData = dataExcel.map(row => {
+        return {
+            dataRealisasiId: headerId,
+            kabupatenKota: String(row['Kabupaten/Kota'] || row['Kabupaten'] || '-').trim(),
+            smkNegeri: Number(row['SMK Negeri']) || 0,
+            realisasiNegeri: Number(cleanCurrency(row['Realisasi Negeri'])) || 0,
+            smkSwasta: Number(row['SMK Swasta']) || 0,
+            realisasiSwasta: Number(cleanCurrency(row['Realisasi Swasta'])) || 0
+        };
+    });
 
     await tx.realisasiPrakerin.createMany({ data: detailData });
     return detailData.length;
