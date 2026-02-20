@@ -97,7 +97,7 @@ const kadisController = {
                             });
                         }
 
-                        // Khusus IPLM / Literasi (Jumlah Sasaran)
+                        // Khusus IPLM / Literasi (Jumlah Orang)
                         if (upload.detailIplm?.length) {
                             upload.detailIplm.forEach(item => {
                                 jumlahFisik += Number(item.jumlahOrang) || 0;
@@ -319,7 +319,13 @@ const kadisController = {
                 detailItems = headerData.detailBosda.map(item => ({ ...item, nominal: parseNominal(item.nominal) }));
                 tipeLaporan = "BOSDA";
             } else if (headerData.detailSpp?.length > 0) {
-                detailItems = headerData.detailSpp.map(item => ({ ...item, nominal: parseNominal(item.nominal) }));
+                detailItems = headerData.detailSpp.map(item => ({
+                    ...item,
+                    nominal: parseNominal(item.nominal),
+                    realisasiSma: parseNominal(item.realisasiSma),
+                    realisasiSmk: parseNominal(item.realisasiSmk),
+                    realisasiSlb: parseNominal(item.realisasiSlb)
+                }));
                 tipeLaporan = "SPP";
             } else if (headerData.detailBeasiswa?.length > 0) {
                 detailItems = headerData.detailBeasiswa.map(item => ({ ...item, nominal: parseNominal(item.nominal) }));
@@ -439,7 +445,13 @@ const kadisController = {
                 else if (header.detailSpp?.length) {
                     header.detailSpp.forEach(item => {
                         totalFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
-                        itemsList.push({ ...item, nominal: parseNom(item.nominal) });
+                        itemsList.push({
+                            ...item,
+                            nominal: parseNom(item.nominal),
+                            realisasiSma: parseNom(item.realisasiSma),
+                            realisasiSmk: parseNom(item.realisasiSmk),
+                            realisasiSlb: parseNom(item.realisasiSlb)
+                        });
                     });
                 }
                 // Prakerin (Siswa)

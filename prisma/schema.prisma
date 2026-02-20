@@ -136,15 +136,17 @@ model RealisasiSpp {
   dataRealisasiId Int           @map("data_realisasi_id")
   kabupatenKota   String?       @map("kabupaten_kota")
   siswaSma        Int           @default(0) @map("siswa_sma")
+  realisasiSma    Decimal?      @map("realisasi_sma") @db.Decimal(15, 2) 
   siswaSmk        Int           @default(0) @map("siswa_smk")
+  realisasiSmk    Decimal?      @map("realisasi_smk") @db.Decimal(15, 2) 
   siswaSlb        Int           @default(0) @map("siswa_slb")
+  realisasiSlb    Decimal?      @map("realisasi_slb") @db.Decimal(15, 2) 
   nominal         Decimal?      @map("nominal_bantuan") @db.Decimal(15, 2)
   header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
   
   @@index([dataRealisasiId])
   @@map("realisasi_spp")
 }
-
 model RealisasiPrakerin {
   id              Int           @id @default(autoincrement())
   dataRealisasiId Int           @map("data_realisasi_id")

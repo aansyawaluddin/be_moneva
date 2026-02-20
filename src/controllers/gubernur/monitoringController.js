@@ -2,6 +2,7 @@ import prisma from '../../utils/prisma.js';
 
 const monitoringController = {
 
+    // 1. STATISTIK DASHBOARD (UMUM)
     getMonitoringStats: async (req, res) => {
         try {
             const allData = await prisma.programKerja.findMany({
@@ -18,7 +19,7 @@ const monitoringController = {
                                     detailVokasi: true,
                                     detailCareer: true,
                                     detailSeragam: true,
-                                    detailIplm: true // <-- TAMBAHAN IPLM
+                                    detailIplm: true
                                 }
                             }
                         }
@@ -29,8 +30,8 @@ const monitoringController = {
             const monitoringData = allData.map(program => {
                 return {
                     id: program.id,
-                    namaProgram: program.namaProgram,
-                    subPrograms: program.subProgram.map(sub => {
+                    "Nama Program": program.namaProgram,
+                    "Daftar Sub Program": program.subProgram.map(sub => {
                         let totalDisetujuiFisik = 0;
                         let totalMenungguFisik = 0;
                         let totalUangRealisasi = 0;
@@ -38,7 +39,6 @@ const monitoringController = {
                         sub.dataRealisasi.forEach(upload => {
                             let jumlahFisik = 0;
 
-                            // Fisik standar (hitung baris)
                             jumlahFisik += upload.detailBeasiswa?.length || 0;
                             jumlahFisik += upload.detailDigital?.length || 0;
                             jumlahFisik += upload.detailCareer?.length || 0;
@@ -120,15 +120,15 @@ const monitoringController = {
 
                         return {
                             id: sub.id,
-                            namaSubProgram: sub.namaSubProgram,
-                            targetFisik: sub.target,
-                            realisasiFisik: totalDisetujuiFisik,
-                            pendingFisik: totalMenungguFisik,
-                            capaianFisik: `${persentaseFisik.toFixed(2)}%`,
-                            paguAnggaran: formatRupiah(paguAnggaran),
-                            realisasiAnggaran: formatRupiah(totalUangRealisasi),
-                            sisaAnggaran: formatRupiah(paguAnggaran - totalUangRealisasi),
-                            serapanAnggaran: `${persentaseKeuangan.toFixed(2)}%`,
+                            "Nama Sub Program": sub.namaSubProgram,
+                            "Target Fisik": sub.target,
+                            "Realisasi Fisik": totalDisetujuiFisik,
+                            "Pending Fisik": totalMenungguFisik,
+                            "Capaian Fisik": `${persentaseFisik.toFixed(2)}%`,
+                            "Pagu Anggaran": formatRupiah(paguAnggaran),
+                            "Realisasi Anggaran": formatRupiah(totalUangRealisasi),
+                            "Sisa Anggaran": formatRupiah(paguAnggaran - totalUangRealisasi),
+                            "Serapan Anggaran": `${persentaseKeuangan.toFixed(2)}%`,
                         };
                     })
                 };
@@ -142,6 +142,7 @@ const monitoringController = {
         }
     },
 
+    // 2. DETAIL MONITORING (RINCIAN PER PROGRAM)
     getMonitoringDetail: async (req, res) => {
         try {
             const { programSlug, subProgramSlug } = req.params;
@@ -165,6 +166,14 @@ const monitoringController = {
             let type = "";
             let totalFisik = 0;
 
+            const formatRupiah = (angka) => {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+                }).format(angka || 0);
+            };
+
+            const getNominal = (val) => val ? Number(val.toString()) : 0;
+
             // A. BEASISWA
             if (nameLower.includes('beasiswa')) {
                 type = "beasiswa";
@@ -176,15 +185,15 @@ const monitoringController = {
                 totalFisik = raw.length;
                 data = raw.map(item => ({
                     id: item.id,
-                    nama: item.namaPenerima,
-                    nik: item.nik || '-',
-                    nim: item.nim || '-',
-                    kampus: item.institusiTujuan,
-                    kabupaten: item.kabupaten,
-                    alamat: item.alamat || '-',
-                    jalur: item.jalur || '-',
-                    nominal: item.nominal ? Number(item.nominal.toString()) : 0,
-                    kontak: item.kontakPenerima || '-',
+                    "Nama Penerima": item.namaPenerima,
+                    "NIK": item.nik || '-',
+                    "NIM": item.nim || '-',
+                    "Institusi Tujuan": item.institusiTujuan,
+                    "Kabupaten / Kota": item.kabupaten,
+                    "Alamat Lengkap": item.alamat || '-',
+                    "Jalur Pendaftaran": item.jalur || '-',
+                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
+                    "Kontak Penerima": item.kontakPenerima || '-',
                 }));
 
                 // B. BOSDA / OPERASIONAL
@@ -201,18 +210,18 @@ const monitoringController = {
                     totalFisik += sumRow;
                     return {
                         id: item.id,
-                        kabupaten: item.kabupatenKota,
-                        smaNegeri: `${item.smaNegeri || 0} Sekolah`,
-                        smaSwasta: `${item.smaSwasta || 0} Sekolah`,
-                        smk: `${item.smk || 0} Sekolah`,
-                        slbNegeri: `${item.slbNegeri || 0} Sekolah`,
-                        slbSwasta: `${item.slbSwasta || 0} Sekolah`,
-                        totalSekolah: sumRow,
-                        nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "SMA Negeri": `${item.smaNegeri || 0} Sekolah`,
+                        "SMA Swasta": `${item.smaSwasta || 0} Sekolah`,
+                        "SMK": `${item.smk || 0} Sekolah`,
+                        "SLB Negeri": `${item.slbNegeri || 0} Sekolah`,
+                        "SLB Swasta": `${item.slbSwasta || 0} Sekolah`,
+                        "Total Sekolah": sumRow,
+                        "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
                     };
                 });
 
-                // C. SPP / MISKIN
+                // C. SPP / MISKIN (SUDAH DI UPDATE)
             } else if (nameLower.includes('spp') || nameLower.includes('miskin')) {
                 type = "spp";
                 const raw = await prisma.realisasiSpp.findMany({
@@ -225,12 +234,15 @@ const monitoringController = {
                     totalFisik += sumRow;
                     return {
                         id: item.id,
-                        kabupaten: item.kabupatenKota,
-                        siswaSma: `${item.siswaSma || 0} Siswa`,
-                        siswaSmk: `${item.siswaSmk || 0} Siswa`,
-                        siswaSlb: `${item.siswaSlb || 0} Siswa`,
-                        totalSiswa: sumRow,
-                        nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "Siswa SMA": `${item.siswaSma || 0} Siswa`,
+                        "Realisasi SMA": formatRupiah(getNominal(item.realisasiSma)),
+                        "Siswa SMK": `${item.siswaSmk || 0} Siswa`,
+                        "Realisasi SMK": formatRupiah(getNominal(item.realisasiSmk)),
+                        "Siswa SLB": `${item.siswaSlb || 0} Siswa`,
+                        "Realisasi SLB": formatRupiah(getNominal(item.realisasiSlb)),
+                        "Total Siswa": sumRow,
+                        "Total Nominal": formatRupiah(getNominal(item.nominal)),
                     };
                 });
 
@@ -243,25 +255,19 @@ const monitoringController = {
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
 
-                const formatRupiah = (angka) => {
-                    return new Intl.NumberFormat('id-ID', {
-                        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-                    }).format(angka || 0);
-                };
-
                 data = raw.map(item => {
                     const sumRow = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
                     totalFisik += sumRow;
-                    const uNegeri = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0;
-                    const uSwasta = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0;
+                    const uNegeri = getNominal(item.realisasiNegeri);
+                    const uSwasta = getNominal(item.realisasiSwasta);
                     return {
                         id: item.id,
-                        kabupaten: item.kabupatenKota,
-                        smkNegeri: `${item.smkNegeri || 0} Siswa`,
-                        realisasiNegeri: formatRupiah(uNegeri),
-                        smkSwasta: `${item.smkSwasta || 0} Siswa`,
-                        realisasiSwasta: formatRupiah(uSwasta),
-                        nominal: uNegeri + uSwasta,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "SMK Negeri": `${item.smkNegeri || 0} Siswa`,
+                        "Realisasi Negeri": formatRupiah(uNegeri),
+                        "SMK Swasta": `${item.smkSwasta || 0} Siswa`,
+                        "Realisasi Swasta": formatRupiah(uSwasta),
+                        "Nominal Total": formatRupiah(uNegeri + uSwasta),
                     };
                 });
 
@@ -276,11 +282,11 @@ const monitoringController = {
                 totalFisik = raw.length;
                 data = raw.map(item => ({
                     id: item.id,
-                    sekolah: item.namaSekolah,
-                    barang: item.jenisBarang,
-                    unit: item.jumlahUnit,
-                    kabupaten: item.kabupatenKota,
-                    nominal: item.nominal ? Number(item.nominal.toString()) : 0
+                    "Nama Sekolah": item.namaSekolah,
+                    "Jenis Barang": item.jenisBarang,
+                    "Jumlah Unit": item.jumlahUnit,
+                    "Kabupaten / Kota": item.kabupatenKota,
+                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
                 }));
 
                 // F. VOKASI / PELATIHAN
@@ -296,10 +302,10 @@ const monitoringController = {
                     totalFisik += (Number(item.jumlahOrang) || 0);
                     return {
                         id: item.id,
-                        kegiatan: item.rincianKegiatan,
-                        peserta: `Jumlah: ${item.jumlahOrang} Orang`,
-                        kabupaten: item.kabupatenKota,
-                        nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                        "Rincian Kegiatan": item.rincianKegiatan,
+                        "Jumlah Peserta": `${item.jumlahOrang} Orang`,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
                     };
                 });
 
@@ -316,11 +322,11 @@ const monitoringController = {
                     totalFisik += (Number(item.jumlahOrang) || 0);
                     return {
                         id: item.id,
-                        kegiatan: item.namaKegiatan,
-                        lokasi: item.lokasi,
-                        kabupaten: item.kabupatenKota,
-                        peserta: `${item.jumlahOrang || 0} Orang`,
-                        nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                        "Nama Kegiatan": item.namaKegiatan,
+                        "Lokasi Kegiatan": item.lokasi,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "Jumlah Peserta": `${item.jumlahOrang || 0} Orang`,
+                        "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
                     };
                 });
 
@@ -335,13 +341,13 @@ const monitoringController = {
                 totalFisik = raw.length;
                 data = raw.map(item => ({
                     id: item.id,
-                    sekolah: item.namaSekolah,
-                    siswa: `Jml Siswa: ${item.jumlahSiswa}`,
-                    kabupaten: item.kabupatenKota,
-                    nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                    "Nama Sekolah": item.namaSekolah,
+                    "Jumlah Siswa": `${item.jumlahSiswa} Siswa`,
+                    "Kabupaten / Kota": item.kabupatenKota,
+                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
                 }));
 
-                // I. IPLM / LITERASI (TAMBAHAN BARU)
+                // I. IPLM / LITERASI
             } else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
                 type = "iplm";
                 const raw = await prisma.realisasiIplm.findMany({
@@ -351,15 +357,15 @@ const monitoringController = {
                 });
 
                 data = raw.map(item => {
-                    const junlahOrang = Number(item.jumlahOrang) || 0;
-                    totalFisik += junlahOrang;
+                    const jumlahOrang = Number(item.jumlahOrang) || 0;
+                    totalFisik += jumlahOrang;
                     return {
                         id: item.id,
-                        kegiatan: item.namaKegiatan,
-                        lokasi: item.lokasi || '-',
-                        junlahOrang: item.jumlahOrang,
-                        kabupaten: item.kabupatenKota,
-                        nominal: item.nominal ? Number(item.nominal.toString()) : 0,
+                        "Nama Kegiatan": item.namaKegiatan,
+                        "Lokasi Kegiatan": item.lokasi || '-',
+                        "Jumlah Orang": `${jumlahOrang} Orang`,
+                        "Kabupaten / Kota": item.kabupatenKota,
+                        "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
                     };
                 });
 

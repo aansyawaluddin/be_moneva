@@ -44,7 +44,7 @@ const monitoringWilayahController = {
                     detailVokasi: true,
                     detailCareer: true,
                     detailSeragam: true,
-                    detailIplm: true // <-- TAMBAHAN IPLM
+                    detailIplm: true
                 }
             });
 
@@ -56,19 +56,34 @@ const monitoringWilayahController = {
                     .replace(/^KOTA\s*/, '')
                     .trim();
 
+                // Auto-koreksi Typo dari Excel
                 if (cleaned === 'TOJO UNA UNA' || cleaned === 'TOJO UNAUNA') cleaned = 'TOJO UNA-UNA';
                 if (cleaned === 'TOLI TOLI' || cleaned === 'TOLI-TOLI') cleaned = 'TOLITOLI';
+                if (cleaned === 'BANGGAI KEPUALUAN') cleaned = 'BANGGAI KEPULAUAN'; 
 
                 return cleaned;
             };
 
-            const mapWilayah = {};
+            // Mapping Nama Tampilan Rapi (Proper Case)
+            const DISPLAY_WILAYAH = {
+                "BANGGAI": "Kabupaten Banggai",
+                "BANGGAI KEPULAUAN": "Kabupaten Banggai Kepulauan",
+                "BANGGAI LAUT": "Kabupaten Banggai Laut",
+                "BUOL": "Kabupaten Buol",
+                "DONGGALA": "Kabupaten Donggala",
+                "MOROWALI": "Kabupaten Morowali",
+                "MOROWALI UTARA": "Kabupaten Morowali Utara",
+                "PALU": "Kota Palu",
+                "PARIGI MOUTONG": "Kabupaten Parigi Moutong",
+                "POSO": "Kabupaten Poso",
+                "SIGI": "Kabupaten Sigi",
+                "TOJO UNA-UNA": "Kabupaten Tojo Una-Una",
+                "TOLITOLI": "Kabupaten Tolitoli",
+                "LAINNYA": "Lainnya"
+            };
 
-            const MASTER_WILAYAH = [
-                "BANGGAI", "BANGGAI KEPULAUAN", "BANGGAI LAUT", "BUOL",
-                "DONGGALA", "MOROWALI", "MOROWALI UTARA", "PALU",
-                "PARIGI MOUTONG", "POSO", "SIGI", "TOJO UNA-UNA", "TOLITOLI"
-            ];
+            const mapWilayah = {};
+            const MASTER_WILAYAH = Object.keys(DISPLAY_WILAYAH).filter(k => k !== "LAINNYA");
 
             MASTER_WILAYAH.forEach(wilayah => {
                 mapWilayah[wilayah] = {
@@ -115,13 +130,11 @@ const monitoringWilayahController = {
                 mapWilayah[namaKota].programs[namaProgram].totalRealisasi += realisasiUang;
             };
 
-            // Helper parsing Decimal Prisma aman dari NaN
             const parseNominal = (val) => val ? Number(val.toString()) : 0;
 
             allRealisasi.forEach(header => {
                 const prog = header.subProgram?.programKerja?.namaProgram || 'Tanpa Program';
 
-                // Fungsi Proses Standar (1 Baris = 1 Fisik)
                 const processDetailArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
@@ -132,72 +145,61 @@ const monitoringWilayahController = {
                     }
                 };
 
-                // Fungsi Khusus BOSDA (Menghitung Total Semua Jenis Sekolah)
                 const processBosdaArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
                             const jumlahPenerima = (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
                             const totalNominal = parseNominal(item.nominal);
-
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
                     }
                 };
 
-                // Fungsi Khusus SPP (Menghitung Total Siswa)
                 const processSppArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
                             const jumlahPenerima = (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
                             const totalNominal = parseNominal(item.nominal);
-
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
                     }
                 };
 
-                // Fungsi Khusus Prakerin (Menghitung Total Negeri + Swasta)
                 const processPrakerinArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
                             const jumlahPenerima = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
                             const totalNominal = parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta);
-
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
                     }
                 };
 
-                // Fungsi Khusus Vokasi & Career (Menghitung jumlahOrang)
                 const processOrangArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
                             const jumlahPenerima = Number(item.jumlahOrang) || 0;
                             const totalNominal = parseNominal(item.nominal);
-
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
                     }
                 };
 
-                // Fungsi Khusus IPLM (Menghitung jumlahOrang)
                 const processIplmArray = (arrayDetail, fieldKabupaten) => {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = Number(item.jumlahOrang) || 0;
+                            const jumlahPenerima = Number(item.jumlahSasaran) || 0;
                             const totalNominal = parseNominal(item.nominal);
-
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
                     }
                 };
 
-                // --- PEMANGGILAN FUNGSI ---
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
                 processBosdaArray(header.detailBosda, 'kabupatenKota');
                 processSppArray(header.detailSpp, 'kabupatenKota');
@@ -244,7 +246,9 @@ const monitoringWilayahController = {
                 detailProgram: listProgramsProvinsi
             };
 
-            let finalData = Object.values(mapWilayah).map(kota => {
+            let finalData = Object.keys(mapWilayah).map(rawName => {
+                const kota = mapWilayah[rawName];
+
                 let listPrograms = allPrograms.map(prog => {
                     const progData = kota.programs[prog.namaProgram];
                     const realisasiProg = progData ? progData.totalRealisasi : 0;
@@ -270,7 +274,8 @@ const monitoringWilayahController = {
                 const persenTotalKotaDesimal = Number(persenTotalKota.toFixed(3));
 
                 return {
-                    namaKabupaten: kota.namaKabupaten,
+                    namaKabupaten: DISPLAY_WILAYAH[rawName] || rawName,
+                    rawSortKey: rawName, 
                     totalPenerima: kota.totalPenerima,
                     totalRealisasi: formatRupiah(kota.totalRealisasi),
                     persentaseTotal: persenTotalKotaDesimal,
@@ -279,7 +284,8 @@ const monitoringWilayahController = {
                 };
             });
 
-            finalData.sort((a, b) => a.namaKabupaten.localeCompare(b.namaKabupaten));
+            finalData.sort((a, b) => a.rawSortKey.localeCompare(b.rawSortKey));
+            finalData.forEach(item => delete item.rawSortKey);
 
             finalData.unshift(dataProvinsi);
 
