@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import prisma from '../utils/prisma.js'; // PASTIKAN IMPORT PRISMA
+import prisma from '../utils/prisma.js';
 
 export const verifyToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];

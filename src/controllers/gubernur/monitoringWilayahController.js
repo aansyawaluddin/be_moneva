@@ -56,15 +56,20 @@ const monitoringWilayahController = {
                     .replace(/^KOTA\s*/, '')
                     .trim();
 
-                // Auto-koreksi Typo dari Excel
-                if (cleaned === 'TOJO UNA UNA' || cleaned === 'TOJO UNAUNA') cleaned = 'TOJO UNA-UNA';
-                if (cleaned === 'TOLI TOLI' || cleaned === 'TOLI-TOLI') cleaned = 'TOLITOLI';
-                if (cleaned === 'BANGGAI KEPUALUAN') cleaned = 'BANGGAI KEPULAUAN'; 
+                if (cleaned === 'TOUNA' || cleaned === 'TOJO UNA-UNA' || cleaned === 'TOJO UNAUNA') {
+                    cleaned = 'TOJO UNA UNA';
+                }
+                if (cleaned === 'TOLITOLI' || cleaned === 'TOLI-TOLI') {
+                    cleaned = 'TOLI TOLI';
+                }
+                if (cleaned === 'BANGGAI KEPUALUAN') {
+                    cleaned = 'BANGGAI KEPULAUAN';
+                }
 
                 return cleaned;
             };
 
-            // Mapping Nama Tampilan Rapi (Proper Case)
+            // Mapping Nama Tampilan Rapi 
             const DISPLAY_WILAYAH = {
                 "BANGGAI": "Kabupaten Banggai",
                 "BANGGAI KEPULAUAN": "Kabupaten Banggai Kepulauan",
@@ -73,12 +78,12 @@ const monitoringWilayahController = {
                 "DONGGALA": "Kabupaten Donggala",
                 "MOROWALI": "Kabupaten Morowali",
                 "MOROWALI UTARA": "Kabupaten Morowali Utara",
-                "PALU": "Kota Palu",
                 "PARIGI MOUTONG": "Kabupaten Parigi Moutong",
                 "POSO": "Kabupaten Poso",
                 "SIGI": "Kabupaten Sigi",
-                "TOJO UNA-UNA": "Kabupaten Tojo Una-Una",
-                "TOLITOLI": "Kabupaten Tolitoli",
+                "TOJO UNA UNA": "Kabupaten Tojo Una Una",
+                "TOLI TOLI": "Kabupaten Toli Toli",
+                "PALU": "Kota Palu", 
                 "LAINNYA": "Lainnya"
             };
 
@@ -193,7 +198,7 @@ const monitoringWilayahController = {
                     if (arrayDetail && arrayDetail.length > 0) {
                         arrayDetail.forEach(item => {
                             const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = Number(item.jumlahSasaran) || 0;
+                            const jumlahPenerima = Number(item.jumlahSasaran || item.jumlahOrang) || 0;
                             const totalNominal = parseNominal(item.nominal);
                             processItem(namaKab, totalNominal, jumlahPenerima, prog);
                         });
@@ -275,7 +280,6 @@ const monitoringWilayahController = {
 
                 return {
                     namaKabupaten: DISPLAY_WILAYAH[rawName] || rawName,
-                    rawSortKey: rawName, 
                     totalPenerima: kota.totalPenerima,
                     totalRealisasi: formatRupiah(kota.totalRealisasi),
                     persentaseTotal: persenTotalKotaDesimal,
@@ -284,8 +288,7 @@ const monitoringWilayahController = {
                 };
             });
 
-            finalData.sort((a, b) => a.rawSortKey.localeCompare(b.rawSortKey));
-            finalData.forEach(item => delete item.rawSortKey);
+            finalData.sort((a, b) => a.namaKabupaten.localeCompare(b.namaKabupaten));
 
             finalData.unshift(dataProvinsi);
 
