@@ -114,6 +114,7 @@ model DataRealisasi {
 
   detailBosda    RealisasiBosda[]
   detailSpp      RealisasiSpp[]
+  detailBeasiswaCerdas  RealisasiBeasiswaCerdas[]
   detailPrakerin RealisasiPrakerin[]
   detailBeasiswa RealisasiBeasiswa[]
   detailDigital  RealisasiDigital[]
@@ -133,6 +134,8 @@ model DataRealisasi {
 // =========================================
 // DETAIL MODEL
 // =========================================
+
+// Berani Cerdas
 
 model RealisasiBosda {
   id              Int      @id @default(autoincrement())
@@ -167,6 +170,21 @@ model RealisasiSpp {
 
   @@index([dataRealisasiId])
   @@map("realisasi_spp")
+}
+
+model RealisasiBeasiswaCerdas {
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  bidang          String   @map("bidang") @db.Text
+  jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
+  totalPagu       BigInt   @default(0) @map("total_pagu")
+  realisasi       Decimal? @map("realisasi") @db.Decimal(15, 2)
+  sisa            Decimal? @map("sisa") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_beasiswa_cerdas")
 }
 
 model RealisasiPrakerin {
