@@ -11,23 +11,22 @@ const monitoringController = {
                 include: {
                     subProgram: {
                         include: {
-                            // Ambil target & anggaran tahun yang diminta
                             targetTahunan: {
                                 where: { tahun }
                             },
-                            // Hanya ambil realisasi tahun yang diminta
                             dataRealisasi: {
                                 where: { tahun },
                                 include: {
-                                    detailBeasiswa: true,
                                     detailBosda: true,
                                     detailSpp: true,
+                                    detailBeasiswaCerdas: true,
                                     detailPrakerin: true,
                                     detailDigital: true,
                                     detailVokasi: true,
                                     detailCareer: true,
+                                    detailIplm: true,
                                     detailSeragam: true,
-                                    detailIplm: true
+                                    detailBeasiswa: true,
                                 }
                             }
                         }
@@ -67,6 +66,11 @@ const monitoringController = {
                                     jumlahFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
                                 });
                             }
+                            if (upload.detailBeasiswaCerdas?.length > 0) {
+                                upload.detailBeasiswaCerdas.forEach(item => {
+                                    jumlahFisik += Number(item.jumlahSiswa) || 0;
+                                });
+                            }
                             if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
                                     jumlahFisik += (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
@@ -96,6 +100,13 @@ const monitoringController = {
                             sumNominal(upload.detailCareer);
                             sumNominal(upload.detailSeragam);
                             sumNominal(upload.detailIplm);
+
+                            if (upload.detailBeasiswaCerdas?.length > 0) {
+                                upload.detailBeasiswaCerdas.forEach(item => {
+                                    const nilai = item.realisasi ? Number(item.realisasi.toString()) : 0;
+                                    uangLaporan += isNaN(nilai) ? 0 : nilai;
+                                });
+                            }
 
                             if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
@@ -183,28 +194,7 @@ const monitoringController = {
 
             const getNominal = (val) => val ? Number(val.toString()) : 0;
 
-            if (nameLower.includes('beasiswa')) {
-                type = "beasiswa";
-                const raw = await prisma.realisasiBeasiswa.findMany({
-                    where: baseWhere,
-                    include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
-                });
-                totalFisik = raw.length;
-                data = raw.map(item => ({
-                    id: item.id,
-                    "Nama Penerima": item.namaPenerima,
-                    "NIK": item.nik || '-',
-                    "NIM": item.nim || '-',
-                    "Institusi Tujuan": item.institusiTujuan,
-                    "Kabupaten / Kota": item.kabupaten,
-                    "Alamat Lengkap": item.alamat || '-',
-                    "Jalur Pendaftaran": item.jalur || '-',
-                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
-                    "Kontak Penerima": item.kontakPenerima || '-',
-                }));
-
-            } else if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
+            if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
                 type = "bosda";
                 const raw = await prisma.realisasiBosda.findMany({
                     where: baseWhere,
@@ -248,6 +238,25 @@ const monitoringController = {
                         "Realisasi SLB": formatRupiah(getNominal(item.realisasiSlb)),
                         "Total Siswa": sumRow,
                         "Total Nominal": formatRupiah(getNominal(item.nominal)),
+                    };
+                });
+
+            } else if (nameLower.includes('cerdas') || nameLower.includes('bakat istimewa') || nameLower.includes('smanor')) {
+                type = "beasiswa-cerdas";
+                const raw = await prisma.realisasiBeasiswaCerdas.findMany({
+                    where: baseWhere,
+                    include: { header: true },
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
+                });
+                data = raw.map(item => {
+                    totalFisik += Number(item.jumlahSiswa) || 0;
+                    return {
+                        id: item.id,
+                        "Bidang": item.bidang,
+                        "Jumlah Siswa": item.jumlahSiswa,
+                        "Total Pagu": formatRupiah(Number(item.totalPagu)),
+                        "Realisasi": formatRupiah(getNominal(item.realisasi)),
+                        "Sisa": formatRupiah(getNominal(item.sisa)),
                     };
                 });
 
@@ -328,22 +337,6 @@ const monitoringController = {
                     };
                 });
 
-            } else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
-                type = "seragam";
-                const raw = await prisma.realisasiSeragam.findMany({
-                    where: baseWhere,
-                    include: { header: true },
-                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
-                });
-                totalFisik = raw.length;
-                data = raw.map(item => ({
-                    id: item.id,
-                    "Nama Sekolah": item.namaSekolah,
-                    "Jumlah Siswa": `${item.jumlahSiswa} Siswa`,
-                    "Kabupaten / Kota": item.kabupatenKota,
-                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
-                }));
-
             } else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
                 type = "iplm";
                 const raw = await prisma.realisasiIplm.findMany({
@@ -363,6 +356,43 @@ const monitoringController = {
                         "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
                     };
                 });
+
+            } else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
+                type = "seragam";
+                const raw = await prisma.realisasiSeragam.findMany({
+                    where: baseWhere,
+                    include: { header: true },
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
+                });
+                totalFisik = raw.length;
+                data = raw.map(item => ({
+                    id: item.id,
+                    "Nama Sekolah": item.namaSekolah,
+                    "Jumlah Siswa": `${item.jumlahSiswa} Siswa`,
+                    "Kabupaten / Kota": item.kabupatenKota,
+                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
+                }));
+
+            } else if (nameLower.includes('beasiswa')) {
+                type = "beasiswa";
+                const raw = await prisma.realisasiBeasiswa.findMany({
+                    where: baseWhere,
+                    include: { header: true },
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
+                });
+                totalFisik = raw.length;
+                data = raw.map(item => ({
+                    id: item.id,
+                    "Nama Penerima": item.namaPenerima,
+                    "NIK": item.nik || '-',
+                    "NIM": item.nim || '-',
+                    "Institusi Tujuan": item.institusiTujuan,
+                    "Kabupaten / Kota": item.kabupaten,
+                    "Alamat Lengkap": item.alamat || '-',
+                    "Jalur Pendaftaran": item.jalur || '-',
+                    "Nominal Bantuan": formatRupiah(getNominal(item.nominal)),
+                    "Kontak Penerima": item.kontakPenerima || '-',
+                }));
 
             } else {
                 return res.json({

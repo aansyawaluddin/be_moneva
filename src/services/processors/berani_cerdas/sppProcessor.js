@@ -1,5 +1,5 @@
 import xlsx from 'xlsx';
-import { cleanCurrency } from '../../utils/helper.js';
+import { cleanCurrency } from '../../../utils/helper.js';
 
 const process = async (tx, headerId, filePath) => {
     const workbook = xlsx.readFile(filePath);

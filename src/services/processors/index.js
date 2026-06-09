@@ -1,24 +1,26 @@
-import beasiswaProcessor from './beasiswaProcessor.js';
-import bosdaProcessor from './bosdaProcessor.js';
-import sppProcessor from './sppProcessor.js';
-import prakerinProcessor from './prakerinProcessor.js';
-import digitalProcessor from './digitalProcessor.js';
-import vokasionalProcessor from './vokasionalProcessor.js';
-import carierCenterProcessor from './careerCenterProcessor.js';
-import iplmProcessor from './iplmProcessor.js'
-import seragamProcessor from './seragamProcessor.js';
+import beasiswaProcessor from './berani_cerdas/beasiswaProcessor.js';
+import bosdaProcessor from './berani_cerdas/bosdaProcessor.js';
+import sppProcessor from './berani_cerdas/sppProcessor.js';
+import beasiswaCerdasProcessor from './berani_cerdas/beasiswaCerdasProcessor.js';
+import prakerinProcessor from './berani_cerdas/prakerinProcessor.js';
+import digitalProcessor from './berani_cerdas/digitalProcessor.js';
+import vokasionalProcessor from './berani_cerdas/vokasionalProcessor.js';
+import carierCenterProcessor from './berani_cerdas/careerCenterProcessor.js';
+import iplmProcessor from './berani_cerdas/iplmProcessor.js';
+import seragamProcessor from './berani_cerdas/seragamProcessor.js';
 
 
 const processorRegistry = {
-    'beasiswa': beasiswaProcessor,
     'bosda': bosdaProcessor,
     'spp': sppProcessor,
+    'beasiswa-cerdas': beasiswaCerdasProcessor,
     'prakerin': prakerinProcessor,
     'digital': digitalProcessor,
     'vokasional': vokasionalProcessor,
     'career': carierCenterProcessor,
     'iplm': iplmProcessor,
-    'seragam': seragamProcessor
+    'seragam': seragamProcessor,
+    'beasiswa': beasiswaProcessor,
 };
 
 export const getProcessor = (subProgramName) => {
@@ -30,49 +32,51 @@ export const getProcessor = (subProgramName) => {
 
     let foundKey = null;
 
-    // 1. Cek SPP (Prioritas karena namanya sering tertukar)
-    if (nameLower.includes('spp') || nameLower.includes('biaya spp')) {
+    // 1. Cek BOSDA
+    if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
+        foundKey = 'bosda';
+    }
+    // 2. Cek SPP
+    else if (nameLower.includes('spp') || nameLower.includes('biaya spp')) {
         foundKey = 'spp';
     }
-    // 2. Cek Prakerin
+    // 3. Cek Beasiswa Cerdas / SMANOR (sebelum beasiswa umum karena lebih spesifik)
+    else if (nameLower.includes('cerdas') || nameLower.includes('bakat istimewa') || nameLower.includes('smanor')) {
+        foundKey = 'beasiswa-cerdas';
+    }
+    // 4. Cek Prakerin
     else if (nameLower.includes('prakerin') || nameLower.includes('uji kompetensi')) {
         foundKey = 'prakerin';
     }
-    // 3. Cek Digitalisasi
+    // 5. Cek Digitalisasi
     else if (nameLower.includes('digital') || nameLower.includes('sarana prasarana')) {
         foundKey = 'digital';
     }
-    // 4. Cek Vokasi
+    // 6. Cek Vokasi
     else if (nameLower.includes('vokasional') || nameLower.includes('siap kerja')) {
         foundKey = 'vokasional';
     }
-    // 5. Cek Career Center
+    // 7. Cek Career Center
     else if (nameLower.includes('career') || nameLower.includes('karir')) {
         foundKey = 'career';
     }
-    // 6. Cek Seragam
-    else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
-        foundKey = 'seragam';
-    }
-    // 7. Cek IPLM / Literasi / Minat Baca (BARU)
+    // 8. Cek IPLM / Literasi / Minat Baca
     else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
         foundKey = 'iplm';
     }
-    // 8. Cek BOSDA
-    else if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
-        foundKey = 'bosda';
+    // 9. Cek Seragam
+    else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
+        foundKey = 'seragam';
     }
-    // 9. Cek Beasiswa (Terakhir karena paling umum)
+    // 10. Cek Beasiswa (Terakhir karena paling umum)
     else if (nameLower.includes('beasiswa')) {
         foundKey = 'beasiswa';
     }
 
-    // Jika ketemu, return fungsinya
     if (foundKey) {
         console.log(`LOG: Processor ditemukan: ${foundKey}`);
         return processorRegistry[foundKey];
     }
 
-    // Jika tidak ketemu
     throw new Error(`Processor untuk program "${subProgramName}" belum tersedia.`);
 };

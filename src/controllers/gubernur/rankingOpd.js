@@ -23,15 +23,16 @@ const rankingOpdController = {
                             dataRealisasi: {
                                 where: { statusVerifikasi: 'Disetujui' },
                                 include: {
-                                    detailBeasiswa: true,
                                     detailBosda: true,
                                     detailSpp: true,
+                                    detailBeasiswaCerdas: true,
                                     detailPrakerin: true,
                                     detailDigital: true,
                                     detailVokasi: true,
                                     detailCareer: true,
+                                    detailIplm: true,
                                     detailSeragam: true,
-                                    detailIplm: true 
+                                    detailBeasiswa: true,
                                 }
                             }
                         }
@@ -71,27 +72,28 @@ const rankingOpdController = {
                             return items.reduce((acc, curr) => {
                                 const uangNegeri = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0;
                                 const uangSwasta = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0;
-
-                                const totalNegeri = isNaN(uangNegeri) ? 0 : uangNegeri;
-                                const totalSwasta = isNaN(uangSwasta) ? 0 : uangSwasta;
-
-                                return acc + totalNegeri + totalSwasta;
+                                return acc + (isNaN(uangNegeri) ? 0 : uangNegeri) + (isNaN(uangSwasta) ? 0 : uangSwasta);
                             }, 0);
                         };
 
-                        realisasiUang += sumNominal(upload.detailBeasiswa);
+                        const sumBeasiswaCerdas = (items) => {
+                            if (!items) return 0;
+                            return items.reduce((acc, curr) => {
+                                const nilai = curr.realisasi ? Number(curr.realisasi.toString()) : 0;
+                                return acc + (isNaN(nilai) ? 0 : nilai);
+                            }, 0);
+                        };
+
                         realisasiUang += sumNominal(upload.detailBosda);
                         realisasiUang += sumNominal(upload.detailSpp);
-
+                        realisasiUang += sumBeasiswaCerdas(upload.detailBeasiswaCerdas);
                         realisasiUang += sumPrakerin(upload.detailPrakerin);
-
                         realisasiUang += sumNominal(upload.detailDigital);
-
                         realisasiUang += sumNominal(upload.detailVokasi);
-
                         realisasiUang += sumNominal(upload.detailCareer);
+                        realisasiUang += sumNominal(upload.detailIplm);
                         realisasiUang += sumNominal(upload.detailSeragam);
-                        realisasiUang += sumNominal(upload.detailIplm); 
+                        realisasiUang += sumNominal(upload.detailBeasiswa);
                     });
 
                     opdStats[namaDinas].totalRealisasi += realisasiUang;
@@ -102,9 +104,7 @@ const rankingOpdController = {
 
             let rankingArray = Object.values(opdStats).map(opd => {
                 const persentase = opd.totalPagu > 0 ? (opd.totalRealisasi / opd.totalPagu) * 100 : 0;
-
                 const persentaseDesimal = Number(persentase.toFixed(3));
-
                 return {
                     namaDinas: opd.namaDinas,
                     paguAnggaran: formatRupiah(opd.totalPagu),

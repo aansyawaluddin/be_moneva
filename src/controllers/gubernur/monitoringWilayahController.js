@@ -50,15 +50,16 @@ const monitoringWilayahController = {
                 },
                 include: {
                     subProgram: { include: { programKerja: true } },
-                    detailBeasiswa: true,
                     detailBosda: true,
                     detailSpp: true,
+                    detailBeasiswaCerdas: true,
                     detailPrakerin: true,
                     detailDigital: true,
                     detailVokasi: true,
                     detailCareer: true,
+                    detailIplm: true,
                     detailSeragam: true,
-                    detailIplm: true
+                    detailBeasiswa: true,
                 }
             });
 
@@ -169,15 +170,18 @@ const monitoringWilayahController = {
                     arr?.forEach(item => processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
                 };
 
-                processDetailArray(header.detailBeasiswa, 'kabupaten');
                 processBosdaArray(header.detailBosda, 'kabupatenKota');
                 processSppArray(header.detailSpp, 'kabupatenKota');
+                header.detailBeasiswaCerdas?.forEach(item => {
+                    processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSiswa) || 0, prog);
+                });
                 processPrakerinArray(header.detailPrakerin, 'kabupatenKota');
                 processDetailArray(header.detailDigital, 'kabupatenKota');
                 processOrangArray(header.detailVokasi, 'kabupatenKota');
                 processOrangArray(header.detailCareer, 'kabupatenKota');
-                processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processOrangArray(header.detailIplm, 'kabupatenKota');
+                processDetailArray(header.detailSeragam, 'kabupatenKota');
+                processDetailArray(header.detailBeasiswa, 'kabupaten');
             });
 
             const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
