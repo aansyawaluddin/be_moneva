@@ -4,6 +4,8 @@ const programKerjaController = {
 
     getAllPrograms: async (req, res) => {
         try {
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
+
             const programs = await prisma.programKerja.findMany({
                 orderBy: { id: 'asc' }
             });
@@ -11,6 +13,7 @@ const programKerjaController = {
             res.json({
                 status: "success",
                 msg: "Daftar Program Kerja",
+                tahun,
                 data: programs
             });
 
@@ -23,11 +26,18 @@ const programKerjaController = {
     getProgramBySlug: async (req, res) => {
         try {
             const { slug } = req.params;
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
+
             const prog = await prisma.programKerja.findUnique({
-                where: { slug: slug },
+                where: { slug },
                 include: {
                     subProgram: {
-                        orderBy: { id: 'asc' }
+                        orderBy: { id: 'asc' },
+                        include: {
+                            targetTahunan: {
+                                where: { tahun }
+                            }
+                        }
                     }
                 }
             });
@@ -36,18 +46,23 @@ const programKerjaController = {
                 return res.status(404).json({ msg: "Program tidak ditemukan" });
             }
 
-            const subProgramsOnly = prog.subProgram.map(sub => ({
-                id: sub.id,
-                namaSubProgram: sub.namaSubProgram,
-                slug: sub.slug,
-                target: sub.target,
-                anggaran: sub.anggaran.toString()
-            }));
+            const subProgramsOnly = prog.subProgram.map(sub => {
+                const targetData = sub.targetTahunan?.[0];
+                return {
+                    id: sub.id,
+                    namaSubProgram: sub.namaSubProgram,
+                    slug: sub.slug,
+                    target: targetData?.target ?? 0,
+                    anggaran: targetData?.anggaran?.toString() ?? '0'
+                };
+            });
+
             res.json({
                 status: "success",
                 id: prog.id,
                 program: prog.namaProgram,
                 slug: prog.slug,
+                tahun,
                 data: subProgramsOnly
             });
 
@@ -60,19 +75,39 @@ const programKerjaController = {
     getProgramById: async (req, res) => {
         try {
             const { id } = req.params;
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
+
             const prog = await prisma.programKerja.findUnique({
                 where: { id: Number(id) },
-                include: { subProgram: true }
+                include: {
+                    subProgram: {
+                        include: {
+                            targetTahunan: {
+                                where: { tahun }
+                            }
+                        }
+                    }
+                }
             });
 
             if (!prog) return res.status(404).json({ msg: "Program tidak ditemukan" });
 
             const result = {
-                ...prog,
-                subProgram: prog.subProgram.map(sub => ({
-                    ...sub,
-                    anggaran: sub.anggaran.toString()
-                }))
+                id: prog.id,
+                namaProgram: prog.namaProgram,
+                slug: prog.slug,
+                deskripsi: prog.deskripsi,
+                tahun,
+                subProgram: prog.subProgram.map(sub => {
+                    const targetData = sub.targetTahunan?.[0];
+                    return {
+                        id: sub.id,
+                        namaSubProgram: sub.namaSubProgram,
+                        slug: sub.slug,
+                        target: targetData?.target ?? 0,
+                        anggaran: targetData?.anggaran?.toString() ?? '0'
+                    };
+                })
             };
 
             res.json({ status: "success", data: result });

@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+const TAHUN_ANGGARAN = 2025;
+
 const slugify = (text) => {
   return text
     .toString()
@@ -18,12 +20,12 @@ const slugify = (text) => {
 async function main() {
   console.log('🌱 Memulai Seeding Database...');
 
-  // 1. BERSIHKAN DATABASE
   const tables = [
     'realisasi_bosda', 'realisasi_spp', 'realisasi_prakerin',
     'realisasi_beasiswa', 'realisasi_digital', 'realisasi_vokasi',
-    'realisasi_career_center', 'realisasi_seragam',
+    'realisasi_career_center', 'realisasi_iplm', 'realisasi_seragam',
     'data_realisasi', 'access_tokens', 'users',
+    'sub_program_target',
     'sub_program_kerja', 'program_kerja'
   ];
 
@@ -41,10 +43,6 @@ async function main() {
   const salt = await bcrypt.genSalt(10);
   const password = await bcrypt.hash('123', salt);
 
-  // ============================================================
-  // DATA MASTER SESUAI EXCEL (TIDAK ADA NAMA YANG DIPOTONG)
-  // ============================================================
-
   const allProgramsData = [
     {
       namaProgram: 'Berani Cerdas',
@@ -60,7 +58,7 @@ async function main() {
         { nama: 'Pemberian bantuan biaya pendidikan bagi mahasiswa aktif miskin dan/atau berprestasi dalam masa penyelesaian studi', target: 0, anggaran: 0 },
         { nama: 'Pemberian beasiswa dan bantuan biaya pendidikan bagi guru, ASN serta pendidikan profesi', target: 112, anggaran: 324933676000 },
         { nama: 'Perbaikan dan peningkatan sarana dan prasarana pendidikan berbasis Digital SMA/SMK', target: 0, anggaran: 0 },
-        { nama: 'Pelatihan “Vokasional Siap Kerja” bagi Generasi Milenial dan Gen-Z', target: 50, anggaran: 429334900 },
+        { nama: 'Pelatihan "Vokasional Siap Kerja" bagi Generasi Milenial dan Gen-Z', target: 50, anggaran: 429334900 },
         { nama: 'Sulteng Career Center', target: 200, anggaran: 131316100 },
         { nama: 'Peningkatan minat baca dan budaya literasi masyarakat dengan mendorong kenaikan Indeks Pembangunn Literasi Masyarakat (IPLM)', target: 100, anggaran: 1371863571 },
         { nama: 'Bantuan Pemberian Seragam Sekolah', target: 11285, anggaran: 6438350000 }
@@ -189,7 +187,7 @@ async function main() {
     }
   ];
 
-  console.log(`🚀 Menyiapkan ${allProgramsData.length} Program Kerja...`);
+  console.log(`🚀 Menyiapkan ${allProgramsData.length} Program Kerja (Tahun Anggaran: ${TAHUN_ANGGARAN})...`);
 
   for (const prog of allProgramsData) {
     const programDB = await prisma.programKerja.create({
@@ -203,16 +201,25 @@ async function main() {
     console.log(`\n📂 [PROGRAM] ${prog.namaProgram} (ID: ${programDB.id})`);
 
     for (const sub of prog.subPrograms) {
-      await prisma.subProgramKerja.create({
+      const subProgDB = await prisma.subProgramKerja.create({
         data: {
           programKerjaId: programDB.id,
           namaSubProgram: sub.nama,
           slug: slugify(sub.nama),
+        }
+      });
+
+      await prisma.subProgramTarget.create({
+        data: {
+          subProgramId: subProgDB.id,
+          tahun: TAHUN_ANGGARAN,
           target: sub.target,
           anggaran: BigInt(sub.anggaran)
         }
       });
     }
+
+    console.log(`   📊 ${prog.subPrograms.length} sub-program + target tahun ${TAHUN_ANGGARAN} dibuat`);
 
     await prisma.user.create({
       data: {
@@ -241,7 +248,7 @@ async function main() {
         }
       });
     }
-    console.log(`   👥 Dibuatkan 5 Staff untuk ${prog.dinas}`);
+    console.log(`   👥 5 Staff untuk ${prog.dinas} dibuat`);
   }
 
   await prisma.user.create({
@@ -255,11 +262,16 @@ async function main() {
     }
   });
 
+  const totalSubProgram = allProgramsData.reduce((acc, p) => acc + p.subPrograms.length, 0);
+
   console.log('\n==============================================');
   console.log('✅ SEEDING SELESAI!');
+  console.log(`📅 Tahun Anggaran  : ${TAHUN_ANGGARAN}`);
   console.log('🔑 Password Default: 123');
-  console.log(`📊 Total Program: ${allProgramsData.length}`);
-  console.log('👤 Akun Gubernur: gubernur');
+  console.log(`📊 Total Program   : ${allProgramsData.length}`);
+  console.log(`📋 Total Sub-Prog  : ${totalSubProgram}`);
+  console.log(`🎯 Total Target    : ${totalSubProgram} baris di sub_program_target`);
+  console.log('👤 Akun Gubernur  : gubernur');
   console.log('==============================================');
 }
 

@@ -4,8 +4,18 @@ const monitoringWilayahController = {
 
     getMonitoringWilayah: async (req, res) => {
         try {
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
+
             const allPrograms = await prisma.programKerja.findMany({
-                include: { subProgram: true },
+                include: {
+                    subProgram: {
+                        include: {
+                            targetTahunan: {
+                                where: { tahun }
+                            }
+                        }
+                    }
+                },
                 orderBy: { id: 'asc' }
             });
 
@@ -21,7 +31,8 @@ const monitoringWilayahController = {
             allPrograms.forEach(p => {
                 let totalPaguProgram = 0;
                 p.subProgram.forEach(sub => {
-                    totalPaguProgram += (Number(sub.anggaran) || 0);
+                    const targetData = sub.targetTahunan[0];
+                    totalPaguProgram += targetData?.anggaran ? Number(targetData.anggaran) : 0;
                 });
                 paguProgram[p.namaProgram] = totalPaguProgram;
                 totalAnggaranProvinsi += totalPaguProgram;
@@ -33,7 +44,10 @@ const monitoringWilayahController = {
             });
 
             const allRealisasi = await prisma.dataRealisasi.findMany({
-                where: { statusVerifikasi: 'Disetujui' },
+                where: {
+                    statusVerifikasi: 'Disetujui',
+                    tahun
+                },
                 include: {
                     subProgram: { include: { programKerja: true } },
                     detailBeasiswa: true,
@@ -56,20 +70,13 @@ const monitoringWilayahController = {
                     .replace(/^KOTA\s*/, '')
                     .trim();
 
-                if (cleaned === 'TOUNA' || cleaned === 'TOJO UNA-UNA' || cleaned === 'TOJO UNAUNA') {
-                    cleaned = 'TOJO UNA UNA';
-                }
-                if (cleaned === 'TOLITOLI' || cleaned === 'TOLI-TOLI') {
-                    cleaned = 'TOLI TOLI';
-                }
-                if (cleaned === 'BANGGAI KEPUALUAN') {
-                    cleaned = 'BANGGAI KEPULAUAN';
-                }
+                if (cleaned === 'TOUNA' || cleaned === 'TOJO UNA-UNA' || cleaned === 'TOJO UNAUNA') cleaned = 'TOJO UNA UNA';
+                if (cleaned === 'TOLITOLI' || cleaned === 'TOLI-TOLI') cleaned = 'TOLI TOLI';
+                if (cleaned === 'BANGGAI KEPUALUAN') cleaned = 'BANGGAI KEPULAUAN';
 
                 return cleaned;
             };
 
-            // Mapping Nama Tampilan Rapi 
             const DISPLAY_WILAYAH = {
                 "BANGGAI": "Kabupaten Banggai",
                 "BANGGAI KEPULAUAN": "Kabupaten Banggai Kepulauan",
@@ -83,7 +90,7 @@ const monitoringWilayahController = {
                 "SIGI": "Kabupaten Sigi",
                 "TOJO UNA UNA": "Kabupaten Tojo Una Una",
                 "TOLI TOLI": "Kabupaten Toli Toli",
-                "PALU": "Kota Palu", 
+                "PALU": "Kota Palu",
                 "LAINNYA": "Lainnya"
             };
 
@@ -125,10 +132,7 @@ const monitoringWilayahController = {
                 mapWilayah[namaKota].totalRealisasi += realisasiUang;
 
                 if (!mapWilayah[namaKota].programs[namaProgram]) {
-                    mapWilayah[namaKota].programs[namaProgram] = {
-                        totalPenerima: 0,
-                        totalRealisasi: 0
-                    };
+                    mapWilayah[namaKota].programs[namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
                 }
 
                 mapWilayah[namaKota].programs[namaProgram].totalPenerima += penerima;
@@ -140,69 +144,29 @@ const monitoringWilayahController = {
             allRealisasi.forEach(header => {
                 const prog = header.subProgram?.programKerja?.namaProgram || 'Tanpa Program';
 
-                const processDetailArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const totalNominal = parseNominal(item.nominal);
-                            processItem(namaKab, totalNominal, 1, prog);
-                        });
-                    }
+                const processDetailArray = (arr, fieldKab) => {
+                    arr?.forEach(item => processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), 1, prog));
                 };
-
-                const processBosdaArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
-                            const totalNominal = parseNominal(item.nominal);
-                            processItem(namaKab, totalNominal, jumlahPenerima, prog);
-                        });
-                    }
+                const processBosdaArray = (arr, fieldKab) => {
+                    arr?.forEach(item => {
+                        const jml = (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
+                        processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), jml, prog);
+                    });
                 };
-
-                const processSppArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
-                            const totalNominal = parseNominal(item.nominal);
-                            processItem(namaKab, totalNominal, jumlahPenerima, prog);
-                        });
-                    }
+                const processSppArray = (arr, fieldKab) => {
+                    arr?.forEach(item => {
+                        const jml = (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
+                        processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), jml, prog);
+                    });
                 };
-
-                const processPrakerinArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
-                            const totalNominal = parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta);
-                            processItem(namaKab, totalNominal, jumlahPenerima, prog);
-                        });
-                    }
+                const processPrakerinArray = (arr, fieldKab) => {
+                    arr?.forEach(item => {
+                        const jml = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
+                        processItem(item[fieldKab] || 'Lainnya', parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta), jml, prog);
+                    });
                 };
-
-                const processOrangArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = Number(item.jumlahOrang) || 0;
-                            const totalNominal = parseNominal(item.nominal);
-                            processItem(namaKab, totalNominal, jumlahPenerima, prog);
-                        });
-                    }
-                };
-
-                const processIplmArray = (arrayDetail, fieldKabupaten) => {
-                    if (arrayDetail && arrayDetail.length > 0) {
-                        arrayDetail.forEach(item => {
-                            const namaKab = item[fieldKabupaten] || 'Lainnya';
-                            const jumlahPenerima = Number(item.jumlahSasaran || item.jumlahOrang) || 0;
-                            const totalNominal = parseNominal(item.nominal);
-                            processItem(namaKab, totalNominal, jumlahPenerima, prog);
-                        });
-                    }
+                const processOrangArray = (arr, fieldKab) => {
+                    arr?.forEach(item => processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
                 };
 
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
@@ -213,25 +177,18 @@ const monitoringWilayahController = {
                 processOrangArray(header.detailVokasi, 'kabupatenKota');
                 processOrangArray(header.detailCareer, 'kabupatenKota');
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
-                processIplmArray(header.detailIplm, 'kabupatenKota');
+                processOrangArray(header.detailIplm, 'kabupatenKota');
             });
 
             const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
 
-            const persenTotalProv = totalAnggaranProvinsi > 0
-                ? (rekapProvinsi.totalRealisasi / totalAnggaranProvinsi) * 100
-                : 0;
-            const persenTotalProvDesimal = Number(persenTotalProv.toFixed(3));
-
-            let listProgramsProvinsi = allPrograms.map(prog => {
-                const progData = rekapProvinsi.programs[prog.namaProgram];
-                const realisasiProg = progData ? progData.totalRealisasi : 0;
-                const penerimaProg = progData ? progData.totalPenerima : 0;
+            const buildProgramList = (programsData) => allPrograms.map(prog => {
+                const progData = programsData[prog.namaProgram];
+                const realisasiProg = progData?.totalRealisasi ?? 0;
+                const penerimaProg = progData?.totalPenerima ?? 0;
                 const anggaranProg = paguProgram[prog.namaProgram] || 0;
-
                 const persentaseProg = anggaranProg > 0 ? (realisasiProg / anggaranProg) * 100 : 0;
                 const persentaseDesimal = Number(persentaseProg.toFixed(3));
-
                 return {
                     namaProgram: prog.namaProgram,
                     totalPenerima: penerimaProg,
@@ -242,59 +199,39 @@ const monitoringWilayahController = {
                 };
             });
 
+            const persenTotalProv = totalAnggaranProvinsi > 0 ? (rekapProvinsi.totalRealisasi / totalAnggaranProvinsi) * 100 : 0;
+            const persenTotalProvDesimal = Number(persenTotalProv.toFixed(3));
+
             const dataProvinsi = {
                 namaKabupaten: "SULAWESI TENGAH (TOTAL PROVINSI)",
                 totalPenerima: rekapProvinsi.totalPenerima,
                 totalRealisasi: formatRupiah(rekapProvinsi.totalRealisasi),
                 persentaseTotal: persenTotalProvDesimal,
                 persentaseTotalString: `${persenTotalProvDesimal.toString().replace('.', ',')}%`,
-                detailProgram: listProgramsProvinsi
+                detailProgram: buildProgramList(rekapProvinsi.programs)
             };
 
             let finalData = Object.keys(mapWilayah).map(rawName => {
                 const kota = mapWilayah[rawName];
-
-                let listPrograms = allPrograms.map(prog => {
-                    const progData = kota.programs[prog.namaProgram];
-                    const realisasiProg = progData ? progData.totalRealisasi : 0;
-                    const penerimaProg = progData ? progData.totalPenerima : 0;
-                    const anggaranProg = paguProgram[prog.namaProgram] || 0;
-
-                    const persentaseProg = anggaranProg > 0 ? (realisasiProg / anggaranProg) * 100 : 0;
-                    const persentaseDesimal = Number(persentaseProg.toFixed(3));
-
-                    return {
-                        namaProgram: prog.namaProgram,
-                        totalPenerima: penerimaProg,
-                        anggaran: formatRupiah(anggaranProg),
-                        totalRealisasi: formatRupiah(realisasiProg),
-                        persentase: persentaseDesimal,
-                        persentaseString: `${persentaseDesimal.toString().replace('.', ',')}%`
-                    };
-                });
-
-                const persenTotalKota = totalAnggaranProvinsi > 0
-                    ? (kota.totalRealisasi / totalAnggaranProvinsi) * 100
-                    : 0;
+                const persenTotalKota = totalAnggaranProvinsi > 0 ? (kota.totalRealisasi / totalAnggaranProvinsi) * 100 : 0;
                 const persenTotalKotaDesimal = Number(persenTotalKota.toFixed(3));
-
                 return {
                     namaKabupaten: DISPLAY_WILAYAH[rawName] || rawName,
                     totalPenerima: kota.totalPenerima,
                     totalRealisasi: formatRupiah(kota.totalRealisasi),
                     persentaseTotal: persenTotalKotaDesimal,
                     persentaseTotalString: `${persenTotalKotaDesimal.toString().replace('.', ',')}%`,
-                    detailProgram: listPrograms
+                    detailProgram: buildProgramList(kota.programs)
                 };
             });
 
             finalData.sort((a, b) => a.namaKabupaten.localeCompare(b.namaKabupaten));
-
             finalData.unshift(dataProvinsi);
 
             res.json({
                 status: "success",
                 msg: "Data Monitoring Sebaran Wilayah",
+                tahun,
                 data: finalData
             });
 

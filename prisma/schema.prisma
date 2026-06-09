@@ -15,11 +15,11 @@ model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String
-  role      String  
-  dinas     String? 
+  role      String
+  dinas     String?
   createdAt DateTime @default(now()) @map("created_at")
   kontak    String?  @map("kontak_wa")
-  
+
   programKerjaId Int?          @map("program_kerja_id")
   programKerja   ProgramKerja? @relation(fields: [programKerjaId], references: [id])
 
@@ -38,7 +38,8 @@ model AccessToken {
   expiresAt DateTime? @map("expires_at")
   revoked   Boolean   @default(false)
   createdAt DateTime  @default(now()) @map("created_at")
-  user      User      @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@map("access_tokens")
@@ -49,29 +50,45 @@ model AccessToken {
 // =========================================
 
 model ProgramKerja {
-  id          Int               @id @default(autoincrement())
-  namaProgram String?           @map("nama_program")
-  slug        String            @unique
-  deskripsi   String?           @db.Text
+  id          Int     @id @default(autoincrement())
+  namaProgram String? @map("nama_program")
+  slug        String  @unique
+  deskripsi   String? @db.Text
 
-  subProgram  SubProgramKerja[]
-  users       User[]
+  subProgram SubProgramKerja[]
+  users      User[]
+
   @@map("program_kerja")
 }
 
 model SubProgramKerja {
-  id             Int          @id @default(autoincrement())
-  programKerjaId Int          @map("program_kerja_id")
-  namaSubProgram String?      @map("nama_sub_program") @db.Text
-  slug           String       @unique @db.VarChar(255)
-  target         Int
-  anggaran       BigInt
-  
-  programKerja   ProgramKerja @relation(fields: [programKerjaId], references: [id])
-  dataRealisasi  DataRealisasi[]
+  id             Int     @id @default(autoincrement())
+  programKerjaId Int     @map("program_kerja_id")
+  namaSubProgram String? @map("nama_sub_program") @db.Text
+  slug           String  @unique @db.VarChar(255)
+
+  programKerja  ProgramKerja       @relation(fields: [programKerjaId], references: [id])
+  dataRealisasi DataRealisasi[]
+  targetTahunan SubProgramTarget[]
 
   @@index([programKerjaId])
   @@map("sub_program_kerja")
+}
+
+model SubProgramTarget {
+  id           Int     @id @default(autoincrement())
+  subProgramId Int     @map("sub_program_id")
+  tahun        Int     
+  target       Int
+  anggaran     BigInt
+  keterangan   String? @db.Text
+
+  subProgram SubProgramKerja @relation(fields: [subProgramId], references: [id])
+
+  @@unique([subProgramId, tahun])
+  @@index([subProgramId])
+  @@index([tahun])
+  @@map("sub_program_target")
 }
 
 // =========================================
@@ -79,35 +96,37 @@ model SubProgramKerja {
 // =========================================
 
 model DataRealisasi {
-  id                Int      @id @default(autoincrement())
-  subProgramId      Int      @map("sub_program_id") 
-  namaLaporan       String   @map("nama_laporan")
-  jalur             String?  @map("jalur_pendaftaran") 
-  diInputOleh       Int?     @map("di_input_oleh")
-  tanggalInput      DateTime @default(now()) @map("tanggal_input")
-  buktiDukung       String?  @map("bukti_dukung")
-  statusVerifikasi  String?  @default("Menunggu") @map("status_verifikasi")
-  catatanRevisi     String?  @map("catatan_revisi") @db.Text
-  diVerifikasiOleh  Int?     @map("di_verifikasi_oleh")
+  id                Int       @id @default(autoincrement())
+  subProgramId      Int       @map("sub_program_id")
+  tahun             Int       
+  namaLaporan       String    @map("nama_laporan")
+  diInputOleh       Int?      @map("di_input_oleh")
+  tanggalInput      DateTime  @default(now()) @map("tanggal_input")
+  buktiDukung       String?   @map("bukti_dukung")
+  statusVerifikasi  String?   @default("Menunggu") @map("status_verifikasi")
+  catatanRevisi     String?   @map("catatan_revisi") @db.Text
+  diVerifikasiOleh  Int?      @map("di_verifikasi_oleh")
   tanggalVerifikasi DateTime? @map("tanggal_verifikasi")
-  
-  inputer           User?            @relation("InputOleh", fields: [diInputOleh], references: [id])
-  verifikator       User?            @relation("VerifikasiOleh", fields: [diVerifikasiOleh], references: [id])
-  subProgram        SubProgramKerja  @relation(fields: [subProgramId], references: [id])
 
-  detailBosda           RealisasiBosda[]
-  detailSpp             RealisasiSpp[]
-  detailPrakerin        RealisasiPrakerin[]
-  detailBeasiswa        RealisasiBeasiswa[]
-  detailDigital         RealisasiDigital[]
-  detailVokasi          RealisasiVokasi[]
-  detailCareer          RealisasiCareerCenter[]
-  detailIplm            RealisasiIplm[]
-  detailSeragam         RealisasiSeragam[]
-  
+  inputer     User?           @relation("InputOleh", fields: [diInputOleh], references: [id])
+  verifikator User?           @relation("VerifikasiOleh", fields: [diVerifikasiOleh], references: [id])
+  subProgram  SubProgramKerja @relation(fields: [subProgramId], references: [id])
+
+  detailBosda    RealisasiBosda[]
+  detailSpp      RealisasiSpp[]
+  detailPrakerin RealisasiPrakerin[]
+  detailBeasiswa RealisasiBeasiswa[]
+  detailDigital  RealisasiDigital[]
+  detailVokasi   RealisasiVokasi[]
+  detailCareer   RealisasiCareerCenter[]
+  detailIplm     RealisasiIplm[]
+  detailSeragam  RealisasiSeragam[]
+
   @@index([diInputOleh])
   @@index([diVerifikasiOleh])
   @@index([subProgramId])
+  @@index([subProgramId, tahun])
+  @@index([tahun])
   @@map("data_realisasi")
 }
 
@@ -116,133 +135,142 @@ model DataRealisasi {
 // =========================================
 
 model RealisasiBosda {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  kabupatenKota   String?       @map("kabupaten_kota")
-  smaNegeri       Int           @default(0) @map("sma_negeri")
-  smaSwasta       Int           @default(0) @map("sma_swasta")
-  smk             Int           @default(0) @map("smk")
-  slbNegeri       Int           @default(0) @map("slb_negeri")
-  slbSwasta       Int           @default(0) @map("slb_swasta")
-  nominal         Decimal?      @map("nominal_bantuan") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
-  
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  smaNegeri       Int      @default(0) @map("sma_negeri")
+  smaSwasta       Int      @default(0) @map("sma_swasta")
+  smk             Int      @default(0) @map("smk")
+  slbNegeri       Int      @default(0) @map("slb_negeri")
+  slbSwasta       Int      @default(0) @map("slb_swasta")
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
   @@index([dataRealisasiId])
   @@map("realisasi_bosda")
 }
 
 model RealisasiSpp {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  kabupatenKota   String?       @map("kabupaten_kota")
-  siswaSma        Int           @default(0) @map("siswa_sma")
-  realisasiSma    Decimal?      @map("realisasi_sma") @db.Decimal(15, 2) 
-  siswaSmk        Int           @default(0) @map("siswa_smk")
-  realisasiSmk    Decimal?      @map("realisasi_smk") @db.Decimal(15, 2) 
-  siswaSlb        Int           @default(0) @map("siswa_slb")
-  realisasiSlb    Decimal?      @map("realisasi_slb") @db.Decimal(15, 2) 
-  nominal         Decimal?      @map("nominal_bantuan") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
-  
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  siswaSma        Int      @default(0) @map("siswa_sma")
+  realisasiSma    Decimal? @map("realisasi_sma") @db.Decimal(15, 2)
+  siswaSmk        Int      @default(0) @map("siswa_smk")
+  realisasiSmk    Decimal? @map("realisasi_smk") @db.Decimal(15, 2)
+  siswaSlb        Int      @default(0) @map("siswa_slb")
+  realisasiSlb    Decimal? @map("realisasi_slb") @db.Decimal(15, 2)
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
   @@index([dataRealisasiId])
   @@map("realisasi_spp")
 }
+
 model RealisasiPrakerin {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  kabupatenKota   String        @map("kabupaten_kota")
-  smkNegeri       Int           @default(0) @map("smk_negeri")
-  realisasiNegeri Decimal?      @map("realisasi_negeri") @db.Decimal(15, 2)
-  smkSwasta       Int           @default(0) @map("smk_swasta")
-  realisasiSwasta Decimal?      @map("realisasi_swasta") @db.Decimal(15, 2)
-  
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
-  
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  kabupatenKota   String   @map("kabupaten_kota")
+  smkNegeri       Int      @default(0) @map("smk_negeri")
+  realisasiNegeri Decimal? @map("realisasi_negeri") @db.Decimal(15, 2)
+  smkSwasta       Int      @default(0) @map("smk_swasta")
+  realisasiSwasta Decimal? @map("realisasi_swasta") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
   @@index([dataRealisasiId])
   @@map("realisasi_prakerin")
 }
 
 model RealisasiBeasiswa {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  namaPenerima    String        @map("nama_penerima")
-  nik             String?       @map("nik")             
-  nim             String?       @map("nim")             
-  alamat          String?       @db.Text
-  kabupaten       String?       @db.Text
-  institusiTujuan String?       @map("institusi_tujuan")
-  jalur           String?       @map("jalur")
-  nominal         Decimal?      @db.Decimal(15, 2)
-  kontakPenerima  String?       @map("kontak_penerima")
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  namaPenerima    String   @map("nama_penerima")
+  nik             String?  @map("nik")
+  nim             String?  @map("nim")
+  alamat          String?  @db.Text
+  kabupaten       String?  @db.Text
+  institusiTujuan String?  @map("institusi_tujuan")
+  jalur           String?  @map("jalur")
+  nominal         Decimal? @db.Decimal(15, 2)
+  kontakPenerima  String?  @map("kontak_penerima")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_beasiswa")
 }
 
 model RealisasiDigital {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  namaSekolah     String        @map("nama_sekolah")
-  jenisBarang     String?       @map("jenis_barang")
-  kabupatenKota   String?       @map("kabupaten_kota")
-  jumlahUnit      Int           @default(0) @map("jumlah_unit")
-  nominal         Decimal?      @map("nominal_bantuan") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  namaSekolah     String   @map("nama_sekolah")
+  jenisBarang     String?  @map("jenis_barang")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  jumlahUnit      Int      @default(0) @map("jumlah_unit")
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_digital")
 }
 
 model RealisasiVokasi {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  rincianKegiatan String        @map("rincian_kegiatan") @db.Text
-  kabupatenKota   String?       @map("kabupaten_kota")
-  jumlahOrang     Int           @default(0) @map("jumlah_orang")
-  nominal         Decimal?      @map("nominal_biaya") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  rincianKegiatan String   @map("rincian_kegiatan") @db.Text
+  kabupatenKota   String?  @map("kabupaten_kota")
+  jumlahOrang     Int      @default(0) @map("jumlah_orang")
+  nominal         Decimal? @map("nominal_biaya") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_vokasi")
 }
 
 model RealisasiCareerCenter {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  namaKegiatan    String        @map("nama_kegiatan") @db.Text
-  lokasi          String?       @map("lokasi")
-  kabupatenKota   String?       @map("kabupaten_kota")
-  jumlahOrang     Int           @default(0) @map("jumlah_orang")
-  nominal         Decimal?      @map("biaya_kegiatan") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  namaKegiatan    String   @map("nama_kegiatan") @db.Text
+  lokasi          String?  @map("lokasi")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  jumlahOrang     Int      @default(0) @map("jumlah_orang")
+  nominal         Decimal? @map("biaya_kegiatan") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_career_center")
 }
 
 model RealisasiIplm {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  namaKegiatan    String?       @map("nama_kegiatan") @db.Text
-  lokasi          String?       @map("lokasi") 
-  kabupatenKota   String?       @map("kabupaten_kota")
-  jumlahOrang     Int           @default(0) @map("jumlahOrang") 
-  nominal         Decimal?      @map("nominal_biaya") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  namaKegiatan    String?  @map("nama_kegiatan") @db.Text
+  lokasi          String?  @map("lokasi")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  jumlahOrang     Int      @default(0) @map("jumlahOrang")
+  nominal         Decimal? @map("nominal_biaya") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_iplm")
 }
 
 model RealisasiSeragam {
-  id              Int           @id @default(autoincrement())
-  dataRealisasiId Int           @map("data_realisasi_id")
-  namaSekolah     String        @map("nama_sekolah")
-  jumlahSiswa     Int           @default(0) @map("jumlah_siswa")
-  kabupatenKota   String?       @map("kabupaten_kota")
-  nominal         Decimal?      @map("nominal_bantuan") @db.Decimal(15, 2)
-  header          DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  dataRealisasiId Int      @map("data_realisasi_id")
+  namaSekolah     String   @map("nama_sekolah")
+  jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
+  kabupatenKota   String?  @map("kabupaten_kota")
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
   @@index([dataRealisasiId])
   @@map("realisasi_seragam")

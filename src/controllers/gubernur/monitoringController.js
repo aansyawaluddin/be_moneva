@@ -5,11 +5,19 @@ const monitoringController = {
     // 1. STATISTIK DASHBOARD (UMUM)
     getMonitoringStats: async (req, res) => {
         try {
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
+
             const allData = await prisma.programKerja.findMany({
                 include: {
                     subProgram: {
                         include: {
+                            // Ambil target & anggaran tahun yang diminta
+                            targetTahunan: {
+                                where: { tahun }
+                            },
+                            // Hanya ambil realisasi tahun yang diminta
                             dataRealisasi: {
+                                where: { tahun },
                                 include: {
                                     detailBeasiswa: true,
                                     detailBosda: true,
@@ -31,7 +39,12 @@ const monitoringController = {
                 return {
                     id: program.id,
                     "Nama Program": program.namaProgram,
+                    "Tahun": tahun,
                     "Daftar Sub Program": program.subProgram.map(sub => {
+                        const targetData = sub.targetTahunan[0];
+                        const targetFisik = targetData?.target ?? 0;
+                        const paguAnggaran = targetData?.anggaran ? Number(targetData.anggaran) : 0;
+
                         let totalDisetujuiFisik = 0;
                         let totalMenungguFisik = 0;
                         let totalUangRealisasi = 0;
@@ -44,34 +57,26 @@ const monitoringController = {
                             jumlahFisik += upload.detailCareer?.length || 0;
                             jumlahFisik += upload.detailSeragam?.length || 0;
 
-                            if (upload.detailBosda && upload.detailBosda.length > 0) {
+                            if (upload.detailBosda?.length > 0) {
                                 upload.detailBosda.forEach(item => {
                                     jumlahFisik += (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
                                 });
                             }
-
-                            if (upload.detailSpp && upload.detailSpp.length > 0) {
+                            if (upload.detailSpp?.length > 0) {
                                 upload.detailSpp.forEach(item => {
                                     jumlahFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
                                 });
                             }
-
-                            if (upload.detailPrakerin && upload.detailPrakerin.length > 0) {
+                            if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
                                     jumlahFisik += (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
                                 });
                             }
-
-                            if (upload.detailVokasi && upload.detailVokasi.length > 0) {
-                                upload.detailVokasi.forEach(item => {
-                                    jumlahFisik += Number(item.jumlahOrang) || 0;
-                                });
+                            if (upload.detailVokasi?.length > 0) {
+                                upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
                             }
-
-                            if (upload.detailIplm && upload.detailIplm.length > 0) {
-                                upload.detailIplm.forEach(item => {
-                                    jumlahFisik += Number(item.jumlahOrang) || 0;
-                                });
+                            if (upload.detailIplm?.length > 0) {
+                                upload.detailIplm.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
                             }
 
                             let uangLaporan = 0;
@@ -92,7 +97,7 @@ const monitoringController = {
                             sumNominal(upload.detailSeragam);
                             sumNominal(upload.detailIplm);
 
-                            if (upload.detailPrakerin && upload.detailPrakerin.length > 0) {
+                            if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
                                     const uangNegeri = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0;
                                     const uangSwasta = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0;
@@ -108,20 +113,17 @@ const monitoringController = {
                             }
                         });
 
-                        const paguAnggaran = Number(sub.anggaran) || 0;
-                        let persentaseFisik = sub.target > 0 ? (totalDisetujuiFisik / sub.target) * 100 : 0;
+                        let persentaseFisik = targetFisik > 0 ? (totalDisetujuiFisik / targetFisik) * 100 : 0;
                         let persentaseKeuangan = paguAnggaran > 0 ? (totalUangRealisasi / paguAnggaran) * 100 : 0;
 
-                        const formatRupiah = (angka) => {
-                            return new Intl.NumberFormat('id-ID', {
-                                style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-                            }).format(angka);
-                        };
+                        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', {
+                            style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+                        }).format(angka);
 
                         return {
                             id: sub.id,
                             "Nama Sub Program": sub.namaSubProgram,
-                            "Target Fisik": sub.target,
+                            "Target Fisik": targetFisik,
                             "Realisasi Fisik": totalDisetujuiFisik,
                             "Pending Fisik": totalMenungguFisik,
                             "Capaian Fisik": `${persentaseFisik.toFixed(2)}%`,
@@ -134,7 +136,7 @@ const monitoringController = {
                 };
             });
 
-            res.json({ status: "success", msg: "Data Monitoring Realisasi", data: monitoringData });
+            res.json({ status: "success", msg: "Data Monitoring Realisasi", tahun, data: monitoringData });
 
         } catch (error) {
             console.error(error);
@@ -146,6 +148,7 @@ const monitoringController = {
     getMonitoringDetail: async (req, res) => {
         try {
             const { programSlug, subProgramSlug } = req.params;
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
 
             const subProgram = await prisma.subProgramKerja.findFirst({
                 where: {
@@ -162,23 +165,28 @@ const monitoringController = {
             const subProgramId = subProgram.id;
             const nameLower = subProgram.namaSubProgram.toLowerCase();
 
+            const baseWhere = {
+                header: {
+                    subProgramId,
+                    statusVerifikasi: 'Disetujui',
+                    tahun
+                }
+            };
+
             let data = [];
             let type = "";
             let totalFisik = 0;
 
-            const formatRupiah = (angka) => {
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-                }).format(angka || 0);
-            };
+            const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', {
+                style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+            }).format(angka || 0);
 
             const getNominal = (val) => val ? Number(val.toString()) : 0;
 
-            // A. BEASISWA
             if (nameLower.includes('beasiswa')) {
                 type = "beasiswa";
                 const raw = await prisma.realisasiBeasiswa.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
@@ -196,15 +204,13 @@ const monitoringController = {
                     "Kontak Penerima": item.kontakPenerima || '-',
                 }));
 
-                // B. BOSDA / OPERASIONAL
             } else if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
                 type = "bosda";
                 const raw = await prisma.realisasiBosda.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
-
                 data = raw.map(item => {
                     const sumRow = (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
                     totalFisik += sumRow;
@@ -221,11 +227,10 @@ const monitoringController = {
                     };
                 });
 
-                // C. SPP / MISKIN (SUDAH DI UPDATE)
             } else if (nameLower.includes('spp') || nameLower.includes('miskin')) {
                 type = "spp";
                 const raw = await prisma.realisasiSpp.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
@@ -246,15 +251,13 @@ const monitoringController = {
                     };
                 });
 
-                // D. PRAKERIN
             } else if (nameLower.includes('prakerin') || nameLower.includes('uji kompetensi')) {
                 type = "prakerin";
                 const raw = await prisma.realisasiPrakerin.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
-
                 data = raw.map(item => {
                     const sumRow = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
                     totalFisik += sumRow;
@@ -271,11 +274,10 @@ const monitoringController = {
                     };
                 });
 
-                // E. DIGITALISASI / SARANA
             } else if (nameLower.includes('digital') || nameLower.includes('sarana')) {
                 type = "digital";
                 const raw = await prisma.realisasiDigital.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
@@ -289,15 +291,13 @@ const monitoringController = {
                     "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
                 }));
 
-                // F. VOKASI / PELATIHAN
             } else if (nameLower.includes('vokasi') || nameLower.includes('siap kerja')) {
                 type = "vokasi";
                 const raw = await prisma.realisasiVokasi.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
-
                 data = raw.map(item => {
                     totalFisik += (Number(item.jumlahOrang) || 0);
                     return {
@@ -309,15 +309,13 @@ const monitoringController = {
                     };
                 });
 
-                // G. CAREER CENTER
             } else if (nameLower.includes('career') || nameLower.includes('karir')) {
                 type = "career";
                 const raw = await prisma.realisasiCareerCenter.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
-
                 data = raw.map(item => {
                     totalFisik += (Number(item.jumlahOrang) || 0);
                     return {
@@ -330,11 +328,10 @@ const monitoringController = {
                     };
                 });
 
-                // H. SERAGAM
             } else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
                 type = "seragam";
                 const raw = await prisma.realisasiSeragam.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
@@ -347,15 +344,13 @@ const monitoringController = {
                     "Nominal Bantuan": formatRupiah(getNominal(item.nominal))
                 }));
 
-                // I. IPLM / LITERASI
             } else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
                 type = "iplm";
                 const raw = await prisma.realisasiIplm.findMany({
-                    where: { header: { subProgramId: subProgramId, statusVerifikasi: 'Disetujui' } },
+                    where: baseWhere,
                     include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
-
                 data = raw.map(item => {
                     const jumlahOrang = Number(item.jumlahOrang) || 0;
                     totalFisik += jumlahOrang;
@@ -375,6 +370,7 @@ const monitoringController = {
                     msg: "Belum ada data detail untuk tipe sub program ini.",
                     program: subProgram.programKerja.namaProgram,
                     subProgram: subProgram.namaSubProgram,
+                    tahun,
                     data: []
                 });
             }
@@ -385,6 +381,7 @@ const monitoringController = {
                 programSlug: subProgram.programKerja.slug,
                 subProgram: subProgram.namaSubProgram,
                 subProgramSlug: subProgram.slug,
+                tahun,
                 type: type,
                 totalData: totalFisik,
                 data: data

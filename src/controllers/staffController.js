@@ -8,6 +8,7 @@ const staffController = {
     getJobdesk: async (req, res) => {
         try {
             const userProgramId = req.user.programKerjaId;
+            const tahun = Number(req.query.tahun) || new Date().getFullYear();
 
             if (!userProgramId) {
                 return res.status(400).json({ msg: "Anda belum ditugaskan ke Program Kerja manapun." });
@@ -17,7 +18,12 @@ const staffController = {
                 where: { id: Number(userProgramId) },
                 include: {
                     subProgram: {
-                        orderBy: { id: 'asc' }
+                        orderBy: { id: 'asc' },
+                        include: {
+                            targetTahunan: {
+                                where: { tahun }
+                            }
+                        }
                     }
                 }
             });
@@ -33,13 +39,17 @@ const staffController = {
                     slug: programData.slug,
                     deskripsiProgram: programData.deskripsi,
                 },
-                daftarSubProgram: programData.subProgram.map(sub => ({
-                    id: sub.id,
-                    namaSubProgram: sub.namaSubProgram,
-                    slug: sub.slug,
-                    target: sub.target,
-                    anggaran: sub.anggaran.toString(),
-                }))
+                tahun,
+                daftarSubProgram: programData.subProgram.map(sub => {
+                    const targetData = sub.targetTahunan[0]; // @@unique([subProgramId, tahun])
+                    return {
+                        id: sub.id,
+                        namaSubProgram: sub.namaSubProgram,
+                        slug: sub.slug,
+                        target: targetData?.target ?? 0,
+                        anggaran: targetData?.anggaran?.toString() ?? '0',
+                    };
+                })
             };
 
             res.json({ status: "success", data: result });
@@ -54,8 +64,18 @@ const staffController = {
     uploadLaporan: async (req, res) => {
         try {
             const file = req.file;
-            const { subProgramId, jalur, namaLaporan } = req.body;
+            const { subProgramId, namaLaporan } = req.body;
             const userProgramId = req.user.programKerjaId;
+
+            const tahun = req.body.tahun ? Number(req.body.tahun) : new Date().getFullYear();
+
+            const tahunSekarang = new Date().getFullYear();
+            if (isNaN(tahun) || tahun < 2020 || tahun > tahunSekarang) {
+                if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                return res.status(400).json({
+                    msg: `Tahun tidak valid. Masukkan tahun antara 2020 s/d ${tahunSekarang}.`
+                });
+            }
 
             if (!file) return res.status(400).json({ msg: "File Excel wajib diupload" });
 
@@ -70,6 +90,11 @@ const staffController = {
                 where: {
                     id: Number(subProgramId),
                     programKerjaId: Number(userProgramId)
+                },
+                include: {
+                    targetTahunan: {
+                        where: { tahun }
+                    }
                 }
             });
 
@@ -78,14 +103,18 @@ const staffController = {
                 return res.status(403).json({ msg: "Anda tidak berhak mengupload laporan untuk Sub Program ini." });
             }
 
+            if (subProgramCheck.targetTahunan.length === 0) {
+                console.warn(`⚠️  Upload untuk tahun ${tahun} tapi SubProgramTarget belum ada (subProgramId: ${subProgramId})`);
+            }
+
             let headerId;
 
             await prisma.$transaction(async (tx) => {
                 const header = await tx.dataRealisasi.create({
                     data: {
                         subProgramId: Number(subProgramId),
+                        tahun,
                         namaLaporan: namaLaporan,
-                        jalur: jalur || null,
                         diInputOleh: req.user.id,
                         statusVerifikasi: 'Menunggu',
                         tanggalInput: new Date(),
@@ -107,7 +136,7 @@ const staffController = {
 
             res.status(201).json({
                 status: "success",
-                msg: "Laporan berhasil diupload dan diekstrak. Menunggu verifikasi atasan.",
+                msg: `Laporan tahun ${tahun} berhasil diupload dan diekstrak. Menunggu verifikasi atasan.`,
                 data: savedData
             });
 
@@ -124,6 +153,7 @@ const staffController = {
             const { slug } = req.params;
             const userId = req.user.id;
             const userProgramId = req.user.programKerjaId;
+            const tahun = req.query.tahun ? Number(req.query.tahun) : undefined; // opsional
 
             const subProgram = await prisma.subProgramKerja.findUnique({
                 where: { slug: slug }
@@ -137,11 +167,14 @@ const staffController = {
                 return res.status(403).json({ msg: "Akses Ditolak: Anda tidak ditugaskan di Sub Program ini." });
             }
 
+            const whereClause = {
+                diInputOleh: userId,
+                subProgramId: subProgram.id,
+                ...(tahun && { tahun })
+            };
+
             const data = await prisma.dataRealisasi.findMany({
-                where: {
-                    diInputOleh: userId,
-                    subProgramId: subProgram.id
-                },
+                where: whereClause,
                 orderBy: { tanggalInput: 'desc' },
                 include: {
                     subProgram: { select: { namaSubProgram: true, slug: true } },
@@ -152,6 +185,7 @@ const staffController = {
             res.json({
                 status: "success",
                 subProgram: subProgram.namaSubProgram,
+                tahun: tahun ?? 'semua',
                 data: data
             });
 
@@ -180,7 +214,7 @@ const staffController = {
                     detailVokasi: true,
                     detailCareer: true,
                     detailSeragam: true,
-                    detailIplm: true 
+                    detailIplm: true
                 }
             });
 
@@ -207,19 +241,17 @@ const staffController = {
             else if (headerData.detailVokasi?.length > 0) { detailItems = headerData.detailVokasi; tipeLaporan = "Vokasi"; }
             else if (headerData.detailCareer?.length > 0) { detailItems = headerData.detailCareer; tipeLaporan = "Career Center"; }
             else if (headerData.detailSeragam?.length > 0) { detailItems = headerData.detailSeragam; tipeLaporan = "Seragam"; }
-            else if (headerData.detailIplm?.length > 0) { detailItems = headerData.detailIplm; tipeLaporan = "IPLM"; } 
+            else if (headerData.detailIplm?.length > 0) { detailItems = headerData.detailIplm; tipeLaporan = "IPLM"; }
 
             const parseNominal = (val) => val ? Number(val.toString()) : 0;
 
             detailItems = detailItems.map(item => {
                 let formattedItem = { ...item };
-
                 if (tipeLaporan === "Prakerin") {
                     formattedItem.nominal = parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta);
                 } else {
                     formattedItem.nominal = parseNominal(item.nominal);
                 }
-
                 return formattedItem;
             });
 
@@ -227,6 +259,7 @@ const staffController = {
                 header: {
                     id: headerData.id,
                     namaLaporan: headerData.namaLaporan,
+                    tahun: headerData.tahun,            // ← tampilkan tahun
                     subProgram: headerData.subProgram.namaSubProgram,
                     jalur: headerData.jalur || '-',
                     status: headerData.statusVerifikasi,
