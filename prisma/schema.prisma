@@ -208,6 +208,7 @@ model RealisasiBeasiswa {
   namaPenerima    String   @map("nama_penerima")
   nik             String?  @map("nik")
   nim             String?  @map("nim")
+  programStudi    String?  @map("program_studi")
   alamat          String?  @db.Text
   kabupaten       String?  @db.Text
   institusiTujuan String?  @map("institusi_tujuan")

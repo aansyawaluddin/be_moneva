@@ -217,7 +217,7 @@ const monitoringController = {
                     };
                 });
 
-            } else if (nameLower.includes('spp') || nameLower.includes('miskin')) {
+            } else if (nameLower.includes('spp')) {
                 type = "spp";
                 const raw = await prisma.realisasiSpp.findMany({
                     where: baseWhere,
@@ -386,6 +386,7 @@ const monitoringController = {
                     "Nama Penerima": item.namaPenerima,
                     "NIK": item.nik || '-',
                     "NIM": item.nim || '-',
+                    "Program Studi": item.programStudi || '-',
                     "Institusi Tujuan": item.institusiTujuan,
                     "Kabupaten / Kota": item.kabupaten,
                     "Alamat Lengkap": item.alamat || '-',
