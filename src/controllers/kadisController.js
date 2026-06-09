@@ -4,18 +4,14 @@ import path from 'path';
 
 const kadisController = {
 
-    // 1. GET JOBDESK (Dashboard Utama Kadis)
+    // 1. GET JOBDESK
     getJobdesk: async (req, res) => {
         try {
             const userProgramId = req.user.programKerjaId;
             const tahun = Number(req.query.tahun) || new Date().getFullYear();
 
             if (!userProgramId) {
-                return res.status(200).json({
-                    status: "success",
-                    msg: "Anda belum ditugaskan ke Program Kerja manapun.",
-                    data: null
-                });
+                return res.status(200).json({ status: "success", msg: "Anda belum ditugaskan ke Program Kerja manapun.", data: null });
             }
 
             const programData = await prisma.programKerja.findUnique({
@@ -24,15 +20,14 @@ const kadisController = {
                     subProgram: {
                         orderBy: { id: 'asc' },
                         include: {
-                            targetTahunan: {
-                                where: { tahun }
-                            },
+                            targetTahunan: { where: { tahun } },
                             dataRealisasi: {
                                 where: { statusVerifikasi: 'Disetujui', tahun },
                                 include: {
                                     detailBosda: true,
                                     detailSpp: true,
                                     detailBeasiswaCerdas: true,
+                                    detailBeasiswaMiskin: true,
                                     detailPrakerin: true,
                                     detailDigital: true,
                                     detailVokasi: true,
@@ -47,9 +42,7 @@ const kadisController = {
                 }
             });
 
-            if (!programData) {
-                return res.status(404).json({ msg: "Data Program Kerja tidak ditemukan." });
-            }
+            if (!programData) return res.status(404).json({ msg: "Data Program Kerja tidak ditemukan." });
 
             const result = {
                 programKerja: {
@@ -74,35 +67,24 @@ const kadisController = {
                         jumlahFisik += upload.detailDigital?.length || 0;
                         jumlahFisik += upload.detailSeragam?.length || 0;
 
-                        if (upload.detailBosda?.length) {
-                            upload.detailBosda.forEach(item => {
-                                jumlahFisik += (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
-                            });
-                        }
-                        if (upload.detailSpp?.length) {
-                            upload.detailSpp.forEach(item => {
-                                jumlahFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
-                            });
-                        }
-                        if (upload.detailBeasiswaCerdas?.length) {
-                            upload.detailBeasiswaCerdas.forEach(item => {
-                                jumlahFisik += Number(item.jumlahSiswa) || 0;
-                            });
-                        }
-                        if (upload.detailPrakerin?.length) {
-                            upload.detailPrakerin.forEach(item => {
-                                jumlahFisik += (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
-                            });
-                        }
-                        if (upload.detailVokasi?.length) {
-                            upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
-                        }
-                        if (upload.detailCareer?.length) {
-                            upload.detailCareer.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
-                        }
-                        if (upload.detailIplm?.length) {
-                            upload.detailIplm.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
-                        }
+                        if (upload.detailBosda?.length) upload.detailBosda.forEach(item => {
+                            jumlahFisik += (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0);
+                        });
+                        if (upload.detailSpp?.length) upload.detailSpp.forEach(item => {
+                            jumlahFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
+                        });
+                        if (upload.detailBeasiswaCerdas?.length) upload.detailBeasiswaCerdas.forEach(item => {
+                            jumlahFisik += Number(item.jumlahSiswa) || 0;
+                        });
+                        if (upload.detailBeasiswaMiskin?.length) upload.detailBeasiswaMiskin.forEach(item => {
+                            jumlahFisik += Number(item.realisasiKinerja) || 0;
+                        });
+                        if (upload.detailPrakerin?.length) upload.detailPrakerin.forEach(item => {
+                            jumlahFisik += (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
+                        });
+                        if (upload.detailVokasi?.length) upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
+                        if (upload.detailCareer?.length) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
+                        if (upload.detailIplm?.length) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.jumlahOrang) || 0; });
 
                         totalDisetujuiFisik += jumlahFisik;
 
@@ -116,9 +98,9 @@ const kadisController = {
                         const sumPrakerin = (items) => {
                             if (!items) return 0;
                             return items.reduce((acc, curr) => {
-                                const uangNegeri = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0;
-                                const uangSwasta = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0;
-                                return acc + (isNaN(uangNegeri) ? 0 : uangNegeri) + (isNaN(uangSwasta) ? 0 : uangSwasta);
+                                const n = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0;
+                                const s = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0;
+                                return acc + (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s);
                             }, 0);
                         };
                         const sumBeasiswaCerdas = (items) => {
@@ -128,18 +110,26 @@ const kadisController = {
                                 return acc + (isNaN(nilai) ? 0 : nilai);
                             }, 0);
                         };
+                        const sumBeasiswaMiskin = (items) => {
+                            if (!items) return 0;
+                            return items.reduce((acc, curr) => {
+                                const nilai = curr.realisasiRupiah ? Number(curr.realisasiRupiah.toString()) : 0;
+                                return acc + (isNaN(nilai) ? 0 : nilai);
+                            }, 0);
+                        };
 
                         totalUangRealisasi +=
-                            sumNominal(upload.detailBeasiswa) +
                             sumNominal(upload.detailBosda) +
                             sumNominal(upload.detailSpp) +
                             sumBeasiswaCerdas(upload.detailBeasiswaCerdas) +
+                            sumBeasiswaMiskin(upload.detailBeasiswaMiskin) +
                             sumPrakerin(upload.detailPrakerin) +
                             sumNominal(upload.detailDigital) +
                             sumNominal(upload.detailVokasi) +
                             sumNominal(upload.detailCareer) +
                             sumNominal(upload.detailIplm) +
-                            sumNominal(upload.detailSeragam);
+                            sumNominal(upload.detailSeragam) +
+                            sumNominal(upload.detailBeasiswa);
                     });
 
                     const persentaseFisik = targetFisik > 0 ? (totalDisetujuiFisik / targetFisik) * 100 : 0;
@@ -223,12 +213,7 @@ const kadisController = {
 
             await prisma.dataRealisasi.update({
                 where: { id: Number(id) },
-                data: {
-                    statusVerifikasi: 'Disetujui',
-                    catatanRevisi: null,
-                    diVerifikasiOleh: req.user.id,
-                    tanggalVerifikasi: new Date()
-                }
+                data: { statusVerifikasi: 'Disetujui', catatanRevisi: null, diVerifikasiOleh: req.user.id, tanggalVerifikasi: new Date() }
             });
 
             res.json({ status: "success", msg: "Laporan Berhasil Disetujui (ACC)" });
@@ -263,6 +248,7 @@ const kadisController = {
                 await tx.realisasiBosda.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiSpp.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiBeasiswaCerdas.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                await tx.realisasiBeasiswaMiskin.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiPrakerin.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiDigital.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiVokasi.deleteMany({ where: { dataRealisasiId: Number(id) } });
@@ -273,12 +259,7 @@ const kadisController = {
 
                 await tx.dataRealisasi.update({
                     where: { id: Number(id) },
-                    data: {
-                        statusVerifikasi: 'Ditolak',
-                        catatanRevisi: catatan,
-                        diVerifikasiOleh: req.user.id,
-                        tanggalVerifikasi: null
-                    }
+                    data: { statusVerifikasi: 'Ditolak', catatanRevisi: catatan, diVerifikasiOleh: req.user.id, tanggalVerifikasi: null }
                 });
             });
 
@@ -303,6 +284,7 @@ const kadisController = {
                     detailBosda: true,
                     detailSpp: true,
                     detailBeasiswaCerdas: true,
+                    detailBeasiswaMiskin: true,
                     detailPrakerin: true,
                     detailBeasiswa: true,
                     detailDigital: true,
@@ -327,23 +309,21 @@ const kadisController = {
                 tipeLaporan = "BOSDA";
             } else if (headerData.detailSpp?.length > 0) {
                 detailItems = headerData.detailSpp.map(item => ({
-                    ...item,
-                    nominal: parseNominal(item.nominal),
+                    ...item, nominal: parseNominal(item.nominal),
                     realisasiSma: parseNominal(item.realisasiSma),
                     realisasiSmk: parseNominal(item.realisasiSmk),
                     realisasiSlb: parseNominal(item.realisasiSlb)
                 }));
                 tipeLaporan = "SPP";
             } else if (headerData.detailBeasiswaCerdas?.length > 0) {
-                detailItems = headerData.detailBeasiswaCerdas.map(item => ({
-                    ...item,
-                    nominal: parseNominal(item.realisasi)
-                }));
+                detailItems = headerData.detailBeasiswaCerdas.map(item => ({ ...item, nominal: parseNominal(item.realisasi) }));
                 tipeLaporan = "Beasiswa Cerdas Istimewa";
+            } else if (headerData.detailBeasiswaMiskin?.length > 0) {
+                detailItems = headerData.detailBeasiswaMiskin.map(item => ({ ...item, nominal: parseNominal(item.realisasiRupiah) }));
+                tipeLaporan = "Beasiswa Miskin/Berprestasi";
             } else if (headerData.detailPrakerin?.length > 0) {
                 detailItems = headerData.detailPrakerin.map(item => ({
-                    ...item,
-                    nominal: parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta)
+                    ...item, nominal: parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta)
                 }));
                 tipeLaporan = "Prakerin";
             } else if (headerData.detailBeasiswa?.length > 0) {
@@ -371,6 +351,7 @@ const kadisController = {
                 if (slug.includes('bosda')) tipeLaporan = "BOSDA";
                 else if (slug.includes('spp')) tipeLaporan = "SPP";
                 else if (slug.includes('cerdas') || slug.includes('smanor')) tipeLaporan = "Beasiswa Cerdas Istimewa";
+                else if (slug.includes('miskin') || slug.includes('berprestasi')) tipeLaporan = "Beasiswa Miskin/Berprestasi";
                 else if (slug.includes('prakerin')) tipeLaporan = "Prakerin";
                 else if (slug.includes('beasiswa')) tipeLaporan = "Beasiswa";
                 else if (slug.includes('digital')) tipeLaporan = "Digitalisasi";
@@ -415,13 +396,8 @@ const kadisController = {
             const tahun = Number(req.query.tahun) || new Date().getFullYear();
 
             const subProgram = await prisma.subProgramKerja.findUnique({
-                where: { slug: slug },
-                include: {
-                    programKerja: true,
-                    targetTahunan: {
-                        where: { tahun }
-                    }
-                }
+                where: { slug },
+                include: { programKerja: true, targetTahunan: { where: { tahun } } }
             });
 
             if (!subProgram) return res.status(404).json({ msg: "Sub Program tidak ditemukan." });
@@ -430,16 +406,13 @@ const kadisController = {
             const targetData = subProgram.targetTahunan[0];
 
             const allReports = await prisma.dataRealisasi.findMany({
-                where: {
-                    subProgramId: subProgram.id,
-                    statusVerifikasi: 'Disetujui',
-                    tahun
-                },
+                where: { subProgramId: subProgram.id, statusVerifikasi: 'Disetujui', tahun },
                 orderBy: { tanggalVerifikasi: 'desc' },
                 include: {
                     detailBosda: true,
                     detailSpp: true,
                     detailBeasiswaCerdas: true,
+                    detailBeasiswaMiskin: true,
                     detailPrakerin: true,
                     detailDigital: true,
                     detailVokasi: true,
@@ -463,18 +436,17 @@ const kadisController = {
                 } else if (header.detailSpp?.length) {
                     header.detailSpp.forEach(item => {
                         totalFisik += (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0);
-                        itemsList.push({
-                            ...item,
-                            nominal: parseNom(item.nominal),
-                            realisasiSma: parseNom(item.realisasiSma),
-                            realisasiSmk: parseNom(item.realisasiSmk),
-                            realisasiSlb: parseNom(item.realisasiSlb)
-                        });
+                        itemsList.push({ ...item, nominal: parseNom(item.nominal), realisasiSma: parseNom(item.realisasiSma), realisasiSmk: parseNom(item.realisasiSmk), realisasiSlb: parseNom(item.realisasiSlb) });
                     });
                 } else if (header.detailBeasiswaCerdas?.length) {
                     header.detailBeasiswaCerdas.forEach(item => {
                         totalFisik += Number(item.jumlahSiswa) || 0;
                         itemsList.push({ ...item, nominal: parseNom(item.realisasi) });
+                    });
+                } else if (header.detailBeasiswaMiskin?.length) {
+                    header.detailBeasiswaMiskin.forEach(item => {
+                        totalFisik += Number(item.realisasiKinerja) || 0;
+                        itemsList.push({ ...item, nominal: parseNom(item.realisasiRupiah) });
                     });
                 } else if (header.detailPrakerin?.length) {
                     header.detailPrakerin.forEach(item => {
@@ -485,20 +457,11 @@ const kadisController = {
                     totalFisik += header.detailDigital.length;
                     header.detailDigital.forEach(item => itemsList.push({ ...item, nominal: parseNom(item.nominal) }));
                 } else if (header.detailVokasi?.length) {
-                    header.detailVokasi.forEach(item => {
-                        totalFisik += Number(item.jumlahOrang) || 0;
-                        itemsList.push({ ...item, nominal: parseNom(item.nominal) });
-                    });
+                    header.detailVokasi.forEach(item => { totalFisik += Number(item.jumlahOrang) || 0; itemsList.push({ ...item, nominal: parseNom(item.nominal) }); });
                 } else if (header.detailCareer?.length) {
-                    header.detailCareer.forEach(item => {
-                        totalFisik += Number(item.jumlahOrang) || 0;
-                        itemsList.push({ ...item, nominal: parseNom(item.nominal) });
-                    });
+                    header.detailCareer.forEach(item => { totalFisik += Number(item.jumlahOrang) || 0; itemsList.push({ ...item, nominal: parseNom(item.nominal) }); });
                 } else if (header.detailIplm?.length) {
-                    header.detailIplm.forEach(item => {
-                        totalFisik += Number(item.jumlahOrang) || 0;
-                        itemsList.push({ ...item, nominal: parseNom(item.nominal) });
-                    });
+                    header.detailIplm.forEach(item => { totalFisik += Number(item.jumlahOrang) || 0; itemsList.push({ ...item, nominal: parseNom(item.nominal) }); });
                 } else if (header.detailSeragam?.length) {
                     totalFisik += header.detailSeragam.length;
                     header.detailSeragam.forEach(item => itemsList.push({ ...item, nominal: parseNom(item.nominal) }));

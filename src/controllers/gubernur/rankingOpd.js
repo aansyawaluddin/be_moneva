@@ -26,6 +26,7 @@ const rankingOpdController = {
                                     detailBosda: true,
                                     detailSpp: true,
                                     detailBeasiswaCerdas: true,
+                                    detailBeasiswaMiskin: true,
                                     detailPrakerin: true,
                                     detailDigital: true,
                                     detailVokasi: true,
@@ -46,11 +47,7 @@ const rankingOpdController = {
                 const namaDinas = mapProgramToDinas[prog.id] || 'Dinas Tidak Diketahui';
 
                 if (!opdStats[namaDinas]) {
-                    opdStats[namaDinas] = {
-                        namaDinas: namaDinas,
-                        totalPagu: 0,
-                        totalRealisasi: 0
-                    };
+                    opdStats[namaDinas] = { namaDinas, totalPagu: 0, totalRealisasi: 0 };
                 }
 
                 prog.subProgram.forEach(sub => {
@@ -66,7 +63,6 @@ const rankingOpdController = {
                                 return acc + (isNaN(nilai) ? 0 : nilai);
                             }, 0);
                         };
-
                         const sumPrakerin = (items) => {
                             if (!items) return 0;
                             return items.reduce((acc, curr) => {
@@ -75,7 +71,6 @@ const rankingOpdController = {
                                 return acc + (isNaN(uangNegeri) ? 0 : uangNegeri) + (isNaN(uangSwasta) ? 0 : uangSwasta);
                             }, 0);
                         };
-
                         const sumBeasiswaCerdas = (items) => {
                             if (!items) return 0;
                             return items.reduce((acc, curr) => {
@@ -83,10 +78,18 @@ const rankingOpdController = {
                                 return acc + (isNaN(nilai) ? 0 : nilai);
                             }, 0);
                         };
+                        const sumBeasiswaMiskin = (items) => {
+                            if (!items) return 0;
+                            return items.reduce((acc, curr) => {
+                                const nilai = curr.realisasiRupiah ? Number(curr.realisasiRupiah.toString()) : 0;
+                                return acc + (isNaN(nilai) ? 0 : nilai);
+                            }, 0);
+                        };
 
                         realisasiUang += sumNominal(upload.detailBosda);
                         realisasiUang += sumNominal(upload.detailSpp);
                         realisasiUang += sumBeasiswaCerdas(upload.detailBeasiswaCerdas);
+                        realisasiUang += sumBeasiswaMiskin(upload.detailBeasiswaMiskin);
                         realisasiUang += sumPrakerin(upload.detailPrakerin);
                         realisasiUang += sumNominal(upload.detailDigital);
                         realisasiUang += sumNominal(upload.detailVokasi);
@@ -116,20 +119,12 @@ const rankingOpdController = {
             });
 
             rankingArray.sort((a, b) => b.rawPersentase - a.rawPersentase);
-
             rankingArray = rankingArray.map((item, index) => {
                 delete item.rawPersentase;
-                return {
-                    peringkat: index + 1,
-                    ...item
-                };
+                return { peringkat: index + 1, ...item };
             });
 
-            res.json({
-                status: "success",
-                msg: "Data Ranking OPD berdasarkan Serapan Anggaran",
-                data: rankingArray
-            });
+            res.json({ status: "success", msg: "Data Ranking OPD berdasarkan Serapan Anggaran", data: rankingArray });
 
         } catch (error) {
             console.error(error);

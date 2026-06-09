@@ -20,6 +20,7 @@ const monitoringController = {
                                     detailBosda: true,
                                     detailSpp: true,
                                     detailBeasiswaCerdas: true,
+                                    detailBeasiswaMiskin: true,
                                     detailPrakerin: true,
                                     detailDigital: true,
                                     detailVokasi: true,
@@ -71,6 +72,11 @@ const monitoringController = {
                                     jumlahFisik += Number(item.jumlahSiswa) || 0;
                                 });
                             }
+                            if (upload.detailBeasiswaMiskin?.length > 0) {
+                                upload.detailBeasiswaMiskin.forEach(item => {
+                                    jumlahFisik += Number(item.realisasiKinerja) || 0;
+                                });
+                            }
                             if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
                                     jumlahFisik += (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0);
@@ -107,7 +113,12 @@ const monitoringController = {
                                     uangLaporan += isNaN(nilai) ? 0 : nilai;
                                 });
                             }
-
+                            if (upload.detailBeasiswaMiskin?.length > 0) {
+                                upload.detailBeasiswaMiskin.forEach(item => {
+                                    const nilai = item.realisasiRupiah ? Number(item.realisasiRupiah.toString()) : 0;
+                                    uangLaporan += isNaN(nilai) ? 0 : nilai;
+                                });
+                            }
                             if (upload.detailPrakerin?.length > 0) {
                                 upload.detailPrakerin.forEach(item => {
                                     const uangNegeri = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0;
@@ -197,8 +208,7 @@ const monitoringController = {
             if (nameLower.includes('bosda') || nameLower.includes('operasional')) {
                 type = "bosda";
                 const raw = await prisma.realisasiBosda.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -220,8 +230,7 @@ const monitoringController = {
             } else if (nameLower.includes('spp')) {
                 type = "spp";
                 const raw = await prisma.realisasiSpp.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -244,8 +253,7 @@ const monitoringController = {
             } else if (nameLower.includes('cerdas') || nameLower.includes('bakat istimewa') || nameLower.includes('smanor')) {
                 type = "beasiswa-cerdas";
                 const raw = await prisma.realisasiBeasiswaCerdas.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -260,11 +268,31 @@ const monitoringController = {
                     };
                 });
 
+            } else if (nameLower.includes('penyelesaian studi') || (nameLower.includes('miskin') && nameLower.includes('aktif'))) {
+                type = "beasiswa-miskin";
+                const raw = await prisma.realisasiBeasiswaMiskin.findMany({
+                    where: baseWhere, include: { header: true },
+                    orderBy: { header: { tanggalVerifikasi: 'asc' } }
+                });
+                data = raw.map(item => {
+                    totalFisik += Number(item.realisasiKinerja) || 0;
+                    return {
+                        id: item.id,
+                        "Rincian Kegiatan": item.rincianKegiatan,
+                        "Kabupaten": item.kabupaten || '-',
+                        "Target Kinerja": item.targetKinerja,
+                        "Target Rupiah": formatRupiah(Number(item.targetRupiah)),
+                        "Realisasi Kinerja": item.realisasiKinerja,
+                        "Realisasi Rupiah": formatRupiah(getNominal(item.realisasiRupiah)),
+                        "Capaian Kinerja": item.capaianKinerja,
+                        "Capaian Rupiah": item.capaianRupiah || '-',
+                    };
+                });
+
             } else if (nameLower.includes('prakerin') || nameLower.includes('uji kompetensi')) {
                 type = "prakerin";
                 const raw = await prisma.realisasiPrakerin.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -286,8 +314,7 @@ const monitoringController = {
             } else if (nameLower.includes('digital') || nameLower.includes('sarana')) {
                 type = "digital";
                 const raw = await prisma.realisasiDigital.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 totalFisik = raw.length;
@@ -303,8 +330,7 @@ const monitoringController = {
             } else if (nameLower.includes('vokasi') || nameLower.includes('siap kerja')) {
                 type = "vokasi";
                 const raw = await prisma.realisasiVokasi.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -321,8 +347,7 @@ const monitoringController = {
             } else if (nameLower.includes('career') || nameLower.includes('karir')) {
                 type = "career";
                 const raw = await prisma.realisasiCareerCenter.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -340,8 +365,7 @@ const monitoringController = {
             } else if (nameLower.includes('iplm') || nameLower.includes('literasi') || nameLower.includes('minat baca')) {
                 type = "iplm";
                 const raw = await prisma.realisasiIplm.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 data = raw.map(item => {
@@ -360,8 +384,7 @@ const monitoringController = {
             } else if (nameLower.includes('seragam') || nameLower.includes('sepatu')) {
                 type = "seragam";
                 const raw = await prisma.realisasiSeragam.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 totalFisik = raw.length;
@@ -376,8 +399,7 @@ const monitoringController = {
             } else if (nameLower.includes('beasiswa')) {
                 type = "beasiswa";
                 const raw = await prisma.realisasiBeasiswa.findMany({
-                    where: baseWhere,
-                    include: { header: true },
+                    where: baseWhere, include: { header: true },
                     orderBy: { header: { tanggalVerifikasi: 'asc' } }
                 });
                 totalFisik = raw.length;

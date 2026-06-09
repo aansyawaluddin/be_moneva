@@ -117,6 +117,7 @@ model DataRealisasi {
   detailBeasiswaCerdas  RealisasiBeasiswaCerdas[]
   detailPrakerin RealisasiPrakerin[]
   detailBeasiswa RealisasiBeasiswa[]
+  detailBeasiswaMiskin  RealisasiBeasiswaMiskin[]
   detailDigital  RealisasiDigital[]
   detailVokasi   RealisasiVokasi[]
   detailCareer   RealisasiCareerCenter[]
@@ -220,6 +221,24 @@ model RealisasiBeasiswa {
 
   @@index([dataRealisasiId])
   @@map("realisasi_beasiswa")
+}
+
+model RealisasiBeasiswaMiskin {
+  id               Int      @id @default(autoincrement())
+  dataRealisasiId  Int      @map("data_realisasi_id")
+  rincianKegiatan  String   @map("rincian_kegiatan") @db.Text
+  kabupaten        String?  @map("kabupaten")
+  targetKinerja    Int      @default(0) @map("target_kinerja")
+  targetRupiah     BigInt   @default(0) @map("target_rupiah")
+  realisasiKinerja Int      @default(0) @map("realisasi_kinerja")
+  realisasiRupiah  Decimal? @map("realisasi_rupiah") @db.Decimal(15, 2)
+  capaianKinerja   Int      @default(0) @map("capaian_kinerja")
+  capaianRupiah    String?  @map("capaian_rupiah")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_beasiswa_miskin")
 }
 
 model RealisasiDigital {

@@ -3,6 +3,7 @@ import bosdaProcessor from './berani_cerdas/bosdaProcessor.js';
 import sppProcessor from './berani_cerdas/sppProcessor.js';
 import beasiswaCerdasProcessor from './berani_cerdas/beasiswaCerdasProcessor.js';
 import prakerinProcessor from './berani_cerdas/prakerinProcessor.js';
+import beasiswaMiskinProcessor from './berani_cerdas/beasiswaMiskinProcessor.js';
 import digitalProcessor from './berani_cerdas/digitalProcessor.js';
 import vokasionalProcessor from './berani_cerdas/vokasionalProcessor.js';
 import carierCenterProcessor from './berani_cerdas/careerCenterProcessor.js';
@@ -15,6 +16,7 @@ const processorRegistry = {
     'spp': sppProcessor,
     'beasiswa-cerdas': beasiswaCerdasProcessor,
     'prakerin': prakerinProcessor,
+    'beasiswa-miskin': beasiswaMiskinProcessor,
     'digital': digitalProcessor,
     'vokasional': vokasionalProcessor,
     'career': carierCenterProcessor,
@@ -47,6 +49,10 @@ export const getProcessor = (subProgramName) => {
     // 4. Cek Prakerin
     else if (nameLower.includes('prakerin') || nameLower.includes('uji kompetensi')) {
         foundKey = 'prakerin';
+    }
+    // 5. Cek Beasiswa Miskin / Berprestasi / Penyelesaian Studi
+    else if (nameLower.includes('penyelesaian studi') || (nameLower.includes('miskin') && nameLower.includes('aktif'))) {
+        foundKey = 'beasiswa-miskin';
     }
     // 5. Cek Digitalisasi
     else if (nameLower.includes('digital') || nameLower.includes('sarana prasarana')) {

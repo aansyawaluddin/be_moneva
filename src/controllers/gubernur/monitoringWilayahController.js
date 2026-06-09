@@ -10,9 +10,7 @@ const monitoringWilayahController = {
                 include: {
                     subProgram: {
                         include: {
-                            targetTahunan: {
-                                where: { tahun }
-                            }
+                            targetTahunan: { where: { tahun } }
                         }
                     }
                 },
@@ -21,12 +19,7 @@ const monitoringWilayahController = {
 
             const paguProgram = {};
             let totalAnggaranProvinsi = 0;
-
-            const rekapProvinsi = {
-                totalPenerima: 0,
-                totalRealisasi: 0,
-                programs: {}
-            };
+            const rekapProvinsi = { totalPenerima: 0, totalRealisasi: 0, programs: {} };
 
             allPrograms.forEach(p => {
                 let totalPaguProgram = 0;
@@ -36,23 +29,17 @@ const monitoringWilayahController = {
                 });
                 paguProgram[p.namaProgram] = totalPaguProgram;
                 totalAnggaranProvinsi += totalPaguProgram;
-
-                rekapProvinsi.programs[p.namaProgram] = {
-                    totalPenerima: 0,
-                    totalRealisasi: 0
-                };
+                rekapProvinsi.programs[p.namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
             });
 
             const allRealisasi = await prisma.dataRealisasi.findMany({
-                where: {
-                    statusVerifikasi: 'Disetujui',
-                    tahun
-                },
+                where: { statusVerifikasi: 'Disetujui', tahun },
                 include: {
                     subProgram: { include: { programKerja: true } },
                     detailBosda: true,
                     detailSpp: true,
                     detailBeasiswaCerdas: true,
+                    detailBeasiswaMiskin: true,
                     detailPrakerin: true,
                     detailDigital: true,
                     detailVokasi: true,
@@ -66,15 +53,10 @@ const monitoringWilayahController = {
             const cleanName = (name) => {
                 if (!name) return 'LAINNYA';
                 let cleaned = name.toString().trim().toUpperCase()
-                    .replace(/^KAB\.\s*/, '')
-                    .replace(/^KABUPATEN\s*/, '')
-                    .replace(/^KOTA\s*/, '')
-                    .trim();
-
+                    .replace(/^KAB\.\s*/, '').replace(/^KABUPATEN\s*/, '').replace(/^KOTA\s*/, '').trim();
                 if (cleaned === 'TOUNA' || cleaned === 'TOJO UNA-UNA' || cleaned === 'TOJO UNAUNA') cleaned = 'TOJO UNA UNA';
                 if (cleaned === 'TOLITOLI' || cleaned === 'TOLI-TOLI') cleaned = 'TOLI TOLI';
                 if (cleaned === 'BANGGAI KEPUALUAN') cleaned = 'BANGGAI KEPULAUAN';
-
                 return cleaned;
             };
 
@@ -97,14 +79,8 @@ const monitoringWilayahController = {
 
             const mapWilayah = {};
             const MASTER_WILAYAH = Object.keys(DISPLAY_WILAYAH).filter(k => k !== "LAINNYA");
-
             MASTER_WILAYAH.forEach(wilayah => {
-                mapWilayah[wilayah] = {
-                    namaKabupaten: wilayah,
-                    totalPenerima: 0,
-                    totalRealisasi: 0,
-                    programs: {}
-                };
+                mapWilayah[wilayah] = { namaKabupaten: wilayah, totalPenerima: 0, totalRealisasi: 0, programs: {} };
             });
 
             const processItem = (kabupaten, nominal, jumlahPenerima, namaProgram) => {
@@ -121,12 +97,7 @@ const monitoringWilayahController = {
                 }
 
                 if (!mapWilayah[namaKota]) {
-                    mapWilayah[namaKota] = {
-                        namaKabupaten: namaKota,
-                        totalPenerima: 0,
-                        totalRealisasi: 0,
-                        programs: {}
-                    };
+                    mapWilayah[namaKota] = { namaKabupaten: namaKota, totalPenerima: 0, totalRealisasi: 0, programs: {} };
                 }
 
                 mapWilayah[namaKota].totalPenerima += penerima;
@@ -135,7 +106,6 @@ const monitoringWilayahController = {
                 if (!mapWilayah[namaKota].programs[namaProgram]) {
                     mapWilayah[namaKota].programs[namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
                 }
-
                 mapWilayah[namaKota].programs[namaProgram].totalPenerima += penerima;
                 mapWilayah[namaKota].programs[namaProgram].totalRealisasi += realisasiUang;
             };
@@ -174,6 +144,9 @@ const monitoringWilayahController = {
                 processSppArray(header.detailSpp, 'kabupatenKota');
                 header.detailBeasiswaCerdas?.forEach(item => {
                     processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSiswa) || 0, prog);
+                });
+                header.detailBeasiswaMiskin?.forEach(item => {
+                    processItem(item.kabupaten || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog);
                 });
                 processPrakerinArray(header.detailPrakerin, 'kabupatenKota');
                 processDetailArray(header.detailDigital, 'kabupatenKota');
@@ -232,12 +205,7 @@ const monitoringWilayahController = {
             finalData.sort((a, b) => a.namaKabupaten.localeCompare(b.namaKabupaten));
             finalData.unshift(dataProvinsi);
 
-            res.json({
-                status: "success",
-                msg: "Data Monitoring Sebaran Wilayah",
-                tahun,
-                data: finalData
-            });
+            res.json({ status: "success", msg: "Data Monitoring Sebaran Wilayah", tahun, data: finalData });
 
         } catch (error) {
             console.error(error);
