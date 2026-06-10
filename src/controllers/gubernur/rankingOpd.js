@@ -49,7 +49,7 @@ const rankingOpdController = {
                         realisasiUang += sumRealisasi(upload.detailDigital);
                         realisasiUang += sumRealisasiRupiah(upload.detailVokasi);
                         realisasiUang += sumRealisasiRupiah(upload.detailCareer);
-                        realisasiUang += sumNominal(upload.detailIplm);
+                        realisasiUang += sumRealisasiRupiah(upload.detailIplm); // IPLM pakai realisasiRupiah
                         realisasiUang += sumNominal(upload.detailSeragam);
                         realisasiUang += sumNominal(upload.detailBeasiswa);
                     });

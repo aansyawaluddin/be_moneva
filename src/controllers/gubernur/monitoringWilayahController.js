@@ -90,7 +90,8 @@ const monitoringWilayahController = {
                 header.detailDigital?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSekolah) || 0, prog));
                 header.detailVokasi?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
                 header.detailCareer?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
-                header.detailIplm?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
+    
+                header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
             });
