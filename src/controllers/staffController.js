@@ -2,59 +2,34 @@ import prisma from '../utils/prisma.js';
 import fs from 'fs';
 import { getProcessor } from '../services/processors/index.js';
 
+const parseNom = (val) => val ? Number(val.toString()) : 0;
+
 const staffController = {
 
-    // GET JOBDESK
     getJobdesk: async (req, res) => {
         try {
             const userProgramId = req.user.programKerjaId;
             const tahun = Number(req.query.tahun) || new Date().getFullYear();
-
-            if (!userProgramId) {
-                return res.status(400).json({ msg: "Anda belum ditugaskan ke Program Kerja manapun." });
-            }
+            if (!userProgramId) return res.status(400).json({ msg: "Anda belum ditugaskan ke Program Kerja manapun." });
 
             const programData = await prisma.programKerja.findUnique({
                 where: { id: Number(userProgramId) },
-                include: {
-                    subProgram: {
-                        orderBy: { id: 'asc' },
-                        include: { targetTahunan: { where: { tahun } } }
-                    }
-                }
+                include: { subProgram: { orderBy: { id: 'asc' }, include: { targetTahunan: { where: { tahun } } } } }
             });
-
             if (!programData) return res.status(404).json({ msg: "Data Program Kerja tidak ditemukan." });
 
             const result = {
-                programKerja: {
-                    id: programData.id,
-                    namaProgram: programData.namaProgram,
-                    slug: programData.slug,
-                    deskripsiProgram: programData.deskripsi,
-                },
+                programKerja: { id: programData.id, namaProgram: programData.namaProgram, slug: programData.slug, deskripsiProgram: programData.deskripsi },
                 tahun,
                 daftarSubProgram: programData.subProgram.map(sub => {
                     const targetData = sub.targetTahunan[0];
-                    return {
-                        id: sub.id,
-                        namaSubProgram: sub.namaSubProgram,
-                        slug: sub.slug,
-                        target: targetData?.target ?? 0,
-                        anggaran: targetData?.anggaran?.toString() ?? '0',
-                    };
+                    return { id: sub.id, namaSubProgram: sub.namaSubProgram, slug: sub.slug, target: targetData?.target ?? 0, anggaran: targetData?.anggaran?.toString() ?? '0' };
                 })
             };
-
             res.json({ status: "success", data: result });
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ msg: error.message });
-        }
+        } catch (error) { console.error(error); res.status(500).json({ msg: error.message }); }
     },
 
-    // UPLOAD LAPORAN
     uploadLaporan: async (req, res) => {
         try {
             const file = req.file;
@@ -63,59 +38,29 @@ const staffController = {
             const tahun = req.body.tahun ? Number(req.body.tahun) : new Date().getFullYear();
             const tahunSekarang = new Date().getFullYear();
 
-            if (isNaN(tahun) || tahun < 2020 || tahun > tahunSekarang) {
-                if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                return res.status(400).json({ msg: `Tahun tidak valid. Masukkan tahun antara 2020 s/d ${tahunSekarang}.` });
-            }
+            if (isNaN(tahun) || tahun < 2020 || tahun > tahunSekarang) { if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(400).json({ msg: `Tahun tidak valid. Masukkan tahun antara 2020 s/d ${tahunSekarang}.` }); }
             if (!file) return res.status(400).json({ msg: "File Excel wajib diupload" });
-            if (!subProgramId || isNaN(Number(subProgramId))) {
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                return res.status(400).json({ msg: "Sub Program ID kosong atau tidak valid. Pastikan urutan pengiriman FormData benar (Teks/ID ditaruh di atas, File ditaruh paling bawah)." });
-            }
+            if (!subProgramId || isNaN(Number(subProgramId))) { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(400).json({ msg: "Sub Program ID kosong atau tidak valid. Pastikan urutan pengiriman FormData benar (Teks/ID ditaruh di atas, File ditaruh paling bawah)." }); }
 
             const subProgramCheck = await prisma.subProgramKerja.findFirst({
                 where: { id: Number(subProgramId), programKerjaId: Number(userProgramId) },
                 include: { targetTahunan: { where: { tahun } } }
             });
 
-            if (!subProgramCheck) {
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                return res.status(403).json({ msg: "Anda tidak berhak mengupload laporan untuk Sub Program ini." });
-            }
-
-            if (subProgramCheck.targetTahunan.length === 0) {
-                console.warn(`⚠️  Upload untuk tahun ${tahun} tapi SubProgramTarget belum ada (subProgramId: ${subProgramId})`);
-            }
+            if (!subProgramCheck) { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(403).json({ msg: "Anda tidak berhak mengupload laporan untuk Sub Program ini." }); }
+            if (subProgramCheck.targetTahunan.length === 0) console.warn(`⚠️  Upload untuk tahun ${tahun} tapi SubProgramTarget belum ada (subProgramId: ${subProgramId})`);
 
             let headerId;
             await prisma.$transaction(async (tx) => {
-                const header = await tx.dataRealisasi.create({
-                    data: {
-                        subProgramId: Number(subProgramId),
-                        tahun,
-                        namaLaporan,
-                        diInputOleh: req.user.id,
-                        statusVerifikasi: 'Menunggu',
-                        tanggalInput: new Date(),
-                        buktiDukung: file.filename
-                    }
-                });
+                const header = await tx.dataRealisasi.create({ data: { subProgramId: Number(subProgramId), tahun, namaLaporan, diInputOleh: req.user.id, statusVerifikasi: 'Menunggu', tanggalInput: new Date(), buktiDukung: file.filename } });
                 headerId = header.id;
                 const processor = getProcessor(subProgramCheck.namaSubProgram);
-                if (processor) {
-                    await processor(tx, header.id, file.path);
-                } else {
-                    throw new Error(`Prosesor Excel tidak ditemukan untuk: ${subProgramCheck.namaSubProgram}`);
-                }
+                if (processor) { await processor(tx, header.id, file.path); }
+                else { throw new Error(`Prosesor Excel tidak ditemukan untuk: ${subProgramCheck.namaSubProgram}`); }
             });
 
             const savedData = await prisma.dataRealisasi.findUnique({ where: { id: headerId } });
-            res.status(201).json({
-                status: "success",
-                msg: `Laporan tahun ${tahun} berhasil diupload dan diekstrak. Menunggu verifikasi atasan.`,
-                data: savedData
-            });
-
+            res.status(201).json({ status: "success", msg: `Laporan tahun ${tahun} berhasil diupload dan diekstrak. Menunggu verifikasi atasan.`, data: savedData });
         } catch (error) {
             if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             console.error(error);
@@ -123,7 +68,6 @@ const staffController = {
         }
     },
 
-    // RIWAYAT UPLOAD SAYA
     getMyUploads: async (req, res) => {
         try {
             const { slug } = req.params;
@@ -135,26 +79,15 @@ const staffController = {
             if (!subProgram) return res.status(404).json({ msg: "Sub Program tidak ditemukan." });
             if (subProgram.programKerjaId !== userProgramId) return res.status(403).json({ msg: "Akses Ditolak: Anda tidak ditugaskan di Sub Program ini." });
 
-            const whereClause = { diInputOleh: userId, subProgramId: subProgram.id, ...(tahun && { tahun }) };
-
             const data = await prisma.dataRealisasi.findMany({
-                where: whereClause,
+                where: { diInputOleh: userId, subProgramId: subProgram.id, ...(tahun && { tahun }) },
                 orderBy: { tanggalInput: 'desc' },
-                include: {
-                    subProgram: { select: { namaSubProgram: true, slug: true } },
-                    verifikator: { select: { username: true } }
-                }
+                include: { subProgram: { select: { namaSubProgram: true, slug: true } }, verifikator: { select: { username: true } } }
             });
-
             res.json({ status: "success", subProgram: subProgram.namaSubProgram, tahun: tahun ?? 'semua', data });
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ msg: error.message });
-        }
+        } catch (error) { console.error(error); res.status(500).json({ msg: error.message }); }
     },
 
-    // DETAIL LAPORAN
     getDetailLaporan: async (req, res) => {
         try {
             const { slug, id } = req.params;
@@ -165,17 +98,11 @@ const staffController = {
                 include: {
                     subProgram: { select: { namaSubProgram: true, programKerjaId: true, slug: true } },
                     verifikator: { select: { username: true } },
-                    detailBosda: true,
-                    detailSpp: true,
-                    detailBeasiswaCerdas: true,
-                    detailBeasiswaMiskin: true,
-                    detailPrakerin: true,
-                    detailBeasiswa: true,
-                    detailDigital: true,
-                    detailVokasi: true,
-                    detailCareer: true,
-                    detailIplm: true,
-                    detailSeragam: true,
+                    detailBosda: true, detailSpp: true,
+                    detailBeasiswaCerdas: true, detailBeasiswaMiskin: true,
+                    detailPrakerin: true, detailBeasiswa: true,
+                    detailDigital: true, detailVokasi: true,
+                    detailCareer: true, detailIplm: true, detailSeragam: true,
                 }
             });
 
@@ -183,9 +110,7 @@ const staffController = {
             if (headerData.subProgram.slug !== slug) return res.status(404).json({ msg: "Laporan ini tidak termasuk dalam sub program tersebut." });
             if (headerData.subProgram.programKerjaId !== userProgramId) return res.status(403).json({ msg: "Akses Ditolak: Laporan ini bukan wilayah kerja Anda." });
 
-            let detailItems = [];
-            let tipeLaporan = "";
-            const parseNominal = (val) => val ? Number(val.toString()) : 0;
+            let detailItems = [], tipeLaporan = "";
 
             if (headerData.detailBosda?.length > 0) { detailItems = headerData.detailBosda; tipeLaporan = "BOSDA"; }
             else if (headerData.detailSpp?.length > 0) { detailItems = headerData.detailSpp; tipeLaporan = "SPP"; }
@@ -200,43 +125,21 @@ const staffController = {
             else if (headerData.detailSeragam?.length > 0) { detailItems = headerData.detailSeragam; tipeLaporan = "Seragam"; }
 
             detailItems = detailItems.map(item => {
-                let formattedItem = { ...item };
-                if (tipeLaporan === "Beasiswa Cerdas Istimewa") {
-                    formattedItem.nominal = parseNominal(item.realisasi);
-                } else if (tipeLaporan === "Beasiswa Miskin/Berprestasi") {
-                    formattedItem.nominal = parseNominal(item.realisasiRupiah);
-                } else if (tipeLaporan === "Prakerin") {
-                    formattedItem.nominal = parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta);
-                } else {
-                    formattedItem.nominal = parseNominal(item.nominal);
-                }
-                return formattedItem;
+                let f = { ...item };
+                if (tipeLaporan === "Beasiswa Cerdas Istimewa") f.nominal = parseNom(item.realisasi);
+                else if (tipeLaporan === "Beasiswa Miskin/Berprestasi") f.nominal = parseNom(item.realisasiRupiah);
+                else if (tipeLaporan === "Digitalisasi") f.nominal = parseNom(item.realisasi);
+                else if (tipeLaporan === "Prakerin") f.nominal = parseNom(item.realisasiNegeri) + parseNom(item.realisasiSwasta);
+                else f.nominal = parseNom(item.nominal);
+                return f;
             });
 
             const result = {
-                header: {
-                    id: headerData.id,
-                    namaLaporan: headerData.namaLaporan,
-                    tahun: headerData.tahun,
-                    subProgram: headerData.subProgram.namaSubProgram,
-                    jalur: headerData.jalur || '-',
-                    status: headerData.statusVerifikasi,
-                    catatanRevisi: headerData.catatanRevisi || '-',
-                    verifikator: headerData.verifikator?.username || '-',
-                    tanggalInput: headerData.tanggalInput,
-                    tanggalVerifikasi: headerData.tanggalVerifikasi || '-',
-                    buktiDukung: headerData.buktiDukung,
-                    tipe: tipeLaporan
-                },
+                header: { id: headerData.id, namaLaporan: headerData.namaLaporan, tahun: headerData.tahun, subProgram: headerData.subProgram.namaSubProgram, jalur: headerData.jalur || '-', status: headerData.statusVerifikasi, catatanRevisi: headerData.catatanRevisi || '-', verifikator: headerData.verifikator?.username || '-', tanggalInput: headerData.tanggalInput, tanggalVerifikasi: headerData.tanggalVerifikasi || '-', buktiDukung: headerData.buktiDukung, tipe: tipeLaporan },
                 items: detailItems
             };
-
             res.json({ status: "success", data: result });
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ msg: error.message });
-        }
+        } catch (error) { console.error(error); res.status(500).json({ msg: error.message }); }
     }
 };
 

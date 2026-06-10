@@ -8,14 +8,25 @@ const process = async (tx, headerId, filePath) => {
 
     if (dataExcel.length === 0) throw new Error("File Excel Digitalisasi kosong");
 
-    const detailData = dataExcel.map(row => ({
-        dataRealisasiId: headerId,
-        namaSekolah: row['Nama Sekolah'] || row['Sekolah'],
-        jenisBarang: row['Jenis Barang'] || row['Barang'] || 'Perangkat IT',
-        jumlahUnit: Number(row['Jumlah Unit'] || row['Unit']) || 0,
-        kabupatenKota: row['Kabupaten'] || '-',
-        nominal: cleanCurrency(row['Nominal'] || row['Harga'])
-    }));
+    const detailData = dataExcel
+        .filter(row => row['Bidang'] && String(row['Bidang']).trim() !== '')
+        .map(row => {
+            const totalPaguRaw = Number(row['Total Pagu']) || 0;
+            const realisasi = cleanCurrency(row['Realisasi']);
+            const sisa = cleanCurrency(row['Sisa']);
+
+            return {
+                dataRealisasiId: headerId,
+                bidang: String(row['Bidang']).trim(),
+                jumlahSekolah: Number(row['Jumlah Sekolah']) || 0,
+                jumlahSiswa: Number(row['Jumlah Siswa']) || 0,
+                totalPagu: BigInt(totalPaguRaw),
+                realisasi: isNaN(realisasi) ? 0 : realisasi,
+                sisa: isNaN(sisa) ? 0 : sisa,
+            };
+        });
+
+    if (detailData.length === 0) throw new Error("Tidak ada data valid di Excel Digitalisasi");
 
     await tx.realisasiDigital.createMany({ data: detailData });
     return detailData.length;

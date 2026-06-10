@@ -244,11 +244,12 @@ model RealisasiBeasiswaMiskin {
 model RealisasiDigital {
   id              Int      @id @default(autoincrement())
   dataRealisasiId Int      @map("data_realisasi_id")
-  namaSekolah     String   @map("nama_sekolah")
-  jenisBarang     String?  @map("jenis_barang")
-  kabupatenKota   String?  @map("kabupaten_kota")
-  jumlahUnit      Int      @default(0) @map("jumlah_unit")
-  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+  bidang          String   @map("bidang")
+  jumlahSekolah   Int      @default(0) @map("jumlah_sekolah")
+  jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
+  totalPagu       BigInt   @default(0) @map("total_pagu")
+  realisasi       Decimal? @map("realisasi") @db.Decimal(15, 2)
+  sisa            Decimal? @map("sisa") @db.Decimal(15, 2)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
