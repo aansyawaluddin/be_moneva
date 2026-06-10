@@ -27,7 +27,6 @@ const rankingOpdController = {
             });
 
             const opdStats = {};
-
             allPrograms.forEach(prog => {
                 const namaDinas = mapProgramToDinas[prog.id] || 'Dinas Tidak Diketahui';
                 if (!opdStats[namaDinas]) opdStats[namaDinas] = { namaDinas, totalPagu: 0, totalRealisasi: 0 };
@@ -38,17 +37,17 @@ const rankingOpdController = {
 
                     sub.dataRealisasi.forEach(upload => {
                         const sumNominal = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.nominal ? Number(curr.nominal.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
-                        const sumPrakerin = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0; const s = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0; return acc + (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }, 0); };
                         const sumRealisasi = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasi ? Number(curr.realisasi.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
                         const sumRealisasiRupiah = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiRupiah ? Number(curr.realisasiRupiah.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
+                        const sumPrakerin = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0; const s = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0; return acc + (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }, 0); };
 
                         realisasiUang += sumNominal(upload.detailBosda);
                         realisasiUang += sumNominal(upload.detailSpp);
                         realisasiUang += sumRealisasi(upload.detailBeasiswaCerdas);
                         realisasiUang += sumRealisasiRupiah(upload.detailBeasiswaMiskin);
                         realisasiUang += sumPrakerin(upload.detailPrakerin);
-                        realisasiUang += sumRealisasi(upload.detailDigital); // Digital pakai field realisasi
-                        realisasiUang += sumNominal(upload.detailVokasi);
+                        realisasiUang += sumRealisasi(upload.detailDigital);
+                        realisasiUang += sumRealisasiRupiah(upload.detailVokasi); 
                         realisasiUang += sumNominal(upload.detailCareer);
                         realisasiUang += sumNominal(upload.detailIplm);
                         realisasiUang += sumNominal(upload.detailSeragam);

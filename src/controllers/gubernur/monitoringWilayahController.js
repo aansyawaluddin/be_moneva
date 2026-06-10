@@ -15,10 +15,10 @@ const monitoringWilayahController = {
             const rekapProvinsi = { totalPenerima: 0, totalRealisasi: 0, programs: {} };
 
             allPrograms.forEach(p => {
-                let totalPaguProgram = 0;
-                p.subProgram.forEach(sub => { const t = sub.targetTahunan[0]; totalPaguProgram += t?.anggaran ? Number(t.anggaran) : 0; });
-                paguProgram[p.namaProgram] = totalPaguProgram;
-                totalAnggaranProvinsi += totalPaguProgram;
+                let total = 0;
+                p.subProgram.forEach(sub => { const t = sub.targetTahunan[0]; total += t?.anggaran ? Number(t.anggaran) : 0; });
+                paguProgram[p.namaProgram] = total;
+                totalAnggaranProvinsi += total;
                 rekapProvinsi.programs[p.namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
             });
 
@@ -81,17 +81,16 @@ const monitoringWilayahController = {
                 const processBosdaArray = (arr, fieldKab) => arr?.forEach(item => { const jml = (Number(item.smaNegeri) || 0) + (Number(item.smaSwasta) || 0) + (Number(item.smk) || 0) + (Number(item.slbNegeri) || 0) + (Number(item.slbSwasta) || 0); processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), jml, prog); });
                 const processSppArray = (arr, fieldKab) => arr?.forEach(item => { const jml = (Number(item.siswaSma) || 0) + (Number(item.siswaSmk) || 0) + (Number(item.siswaSlb) || 0); processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), jml, prog); });
                 const processPrakerinArray = (arr, fieldKab) => arr?.forEach(item => { const jml = (Number(item.smkNegeri) || 0) + (Number(item.smkSwasta) || 0); processItem(item[fieldKab] || 'Lainnya', parseNominal(item.realisasiNegeri) + parseNominal(item.realisasiSwasta), jml, prog); });
-                const processOrangArray = (arr, fieldKab) => arr?.forEach(item => processItem(item[fieldKab] || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
 
                 processBosdaArray(header.detailBosda, 'kabupatenKota');
                 processSppArray(header.detailSpp, 'kabupatenKota');
                 header.detailBeasiswaCerdas?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSiswa) || 0, prog));
                 header.detailBeasiswaMiskin?.forEach(item => processItem(item.kabupaten || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
-                header.detailDigital?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSekolah) || 0, prog));
                 processPrakerinArray(header.detailPrakerin, 'kabupatenKota');
-                processOrangArray(header.detailVokasi, 'kabupatenKota');
-                processOrangArray(header.detailCareer, 'kabupatenKota');
-                processOrangArray(header.detailIplm, 'kabupatenKota');
+                header.detailDigital?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSekolah) || 0, prog));
+                header.detailVokasi?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
+                header.detailCareer?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
+                header.detailIplm?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.nominal), Number(item.jumlahOrang) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
             });
@@ -100,8 +99,7 @@ const monitoringWilayahController = {
 
             const buildProgramList = (programsData) => allPrograms.map(prog => {
                 const pd = programsData[prog.namaProgram];
-                const r = pd?.totalRealisasi ?? 0;
-                const p = pd?.totalPenerima ?? 0;
+                const r = pd?.totalRealisasi ?? 0, p = pd?.totalPenerima ?? 0;
                 const a = paguProgram[prog.namaProgram] || 0;
                 const persen = a > 0 ? (r / a) * 100 : 0;
                 const persenD = Number(persen.toFixed(3));
@@ -110,7 +108,6 @@ const monitoringWilayahController = {
 
             const persenProv = totalAnggaranProvinsi > 0 ? (rekapProvinsi.totalRealisasi / totalAnggaranProvinsi) * 100 : 0;
             const persenProvD = Number(persenProv.toFixed(3));
-
             const dataProvinsi = { namaKabupaten: "SULAWESI TENGAH (TOTAL PROVINSI)", totalPenerima: rekapProvinsi.totalPenerima, totalRealisasi: formatRupiah(rekapProvinsi.totalRealisasi), persentaseTotal: persenProvD, persentaseTotalString: `${persenProvD.toString().replace('.', ',')}%`, detailProgram: buildProgramList(rekapProvinsi.programs) };
 
             let finalData = Object.keys(mapWilayah).map(rawName => {
