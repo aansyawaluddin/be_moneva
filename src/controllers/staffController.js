@@ -130,6 +130,7 @@ const staffController = {
                 else if (tipeLaporan === "Beasiswa Miskin/Berprestasi") f.nominal = parseNom(item.realisasiRupiah);
                 else if (tipeLaporan === "Digitalisasi") f.nominal = parseNom(item.realisasi);
                 else if (tipeLaporan === "Vokasi") f.nominal = parseNom(item.realisasiRupiah);
+                else if (tipeLaporan === "Career Center") f.nominal = parseNom(item.realisasiRupiah);
                 else if (tipeLaporan === "Prakerin") f.nominal = parseNom(item.realisasiNegeri) + parseNom(item.realisasiSwasta);
                 else f.nominal = parseNom(item.nominal);
                 return f;

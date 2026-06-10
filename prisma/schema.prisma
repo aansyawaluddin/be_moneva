@@ -277,13 +277,17 @@ model RealisasiVokasi {
 }
 
 model RealisasiCareerCenter {
-  id              Int      @id @default(autoincrement())
-  dataRealisasiId Int      @map("data_realisasi_id")
-  namaKegiatan    String   @map("nama_kegiatan") @db.Text
-  lokasi          String?  @map("lokasi")
-  kabupatenKota   String?  @map("kabupaten_kota")
-  jumlahOrang     Int      @default(0) @map("jumlah_orang")
-  nominal         Decimal? @map("biaya_kegiatan") @db.Decimal(15, 2)
+  id               Int      @id @default(autoincrement())
+  dataRealisasiId  Int      @map("data_realisasi_id")
+  namaKegiatan     String   @map("nama_kegiatan") @db.Text
+  lokasi           String?  @map("lokasi")
+  kabupatenKota    String?  @map("kabupaten_kota")
+  targetKinerja    Int      @default(0) @map("target_kinerja")
+  targetRupiah     BigInt   @default(0) @map("target_rupiah")
+  realisasiKinerja Int      @default(0) @map("realisasi_kinerja")
+  realisasiRupiah  Decimal? @map("realisasi_rupiah") @db.Decimal(15, 2)
+  capaianKinerja   String?  @map("capaian_kinerja")
+  capaianRupiah    String?  @map("capaian_rupiah")
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
