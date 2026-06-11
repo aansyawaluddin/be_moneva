@@ -10,6 +10,8 @@ const INCLUDE_ALL = {
     detailPrakerin: true, detailDigital: true,
     detailVokasi: true, detailCareer: true,
     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
+    detailPemeriksaanGratis: true, detailNasehaKami: true,
+    detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
 };
 
 const staffController = {
@@ -54,8 +56,7 @@ const staffController = {
             res.status(201).json({ status: "success", msg: `Laporan tahun ${tahun} berhasil diupload dan diekstrak. Menunggu verifikasi atasan.`, data: savedData });
         } catch (error) {
             if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-            console.error(error);
-            res.status(500).json({ msg: "Gagal upload atau format Excel salah", error: error.message });
+            console.error(error); res.status(500).json({ msg: "Gagal upload atau format Excel salah", error: error.message });
         }
     },
 
@@ -97,6 +98,13 @@ const staffController = {
             else if (headerData.detailCareer?.length > 0) { detailItems = headerData.detailCareer; tipeLaporan = "Career Center"; }
             else if (headerData.detailIplm?.length > 0) { detailItems = headerData.detailIplm; tipeLaporan = "IPLM"; }
             else if (headerData.detailSeragam?.length > 0) { detailItems = headerData.detailSeragam; tipeLaporan = "Seragam"; }
+            else if (headerData.detailPemeriksaanGratis?.length > 0) { detailItems = headerData.detailPemeriksaanGratis; tipeLaporan = "Pemeriksaan Kesehatan Gratis"; }
+            else if (headerData.detailNasehaKami?.length > 0) { detailItems = headerData.detailNasehaKami; tipeLaporan = "Naseha Kami"; }
+            else if (headerData.detailRsRujukan?.length > 0) { detailItems = headerData.detailRsRujukan; tipeLaporan = "RS Rujukan Internasional"; }
+            else if (headerData.detailStunting?.length > 0) { detailItems = headerData.detailStunting; tipeLaporan = "Pencegahan Stunting"; }
+            else if (headerData.detailKualitasRs?.length > 0) { detailItems = headerData.detailKualitasRs; tipeLaporan = "Kualitas Layanan RS"; }
+
+            const SEHAT_TYPES = ["Pemeriksaan Kesehatan Gratis", "Naseha Kami", "RS Rujukan Internasional", "Pencegahan Stunting", "Kualitas Layanan RS"];
 
             detailItems = detailItems.map(item => {
                 let f = { ...item };
@@ -104,6 +112,7 @@ const staffController = {
                 else if (["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM"].includes(tipeLaporan)) f.nominal = parseNom(item.realisasiRupiah);
                 else if (tipeLaporan === "Digitalisasi") f.nominal = parseNom(item.realisasi);
                 else if (tipeLaporan === "Prakerin") f.nominal = parseNom(item.realisasiNegeri) + parseNom(item.realisasiSwasta);
+                else if (SEHAT_TYPES.includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
                 else f.nominal = parseNom(item.nominal);
                 return f;
             });

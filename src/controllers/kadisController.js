@@ -7,7 +7,22 @@ const parseNom = (val) => val ? Number(val.toString()) : 0;
 const sumNominal = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.nominal ? Number(curr.nominal.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
 const sumRealisasi = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasi ? Number(curr.realisasi.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
 const sumRealisasiRupiah = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiRupiah ? Number(curr.realisasiRupiah.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
+const sumRealisasiAnggaran = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiAnggaran ? Number(curr.realisasiAnggaran.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
 const sumPrakerin = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0; const s = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0; return acc + (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }, 0); };
+
+const INCLUDE_ALL = {
+    detailBosda: true, detailSpp: true,
+    detailBeasiswaCerdas: true, detailBeasiswaMiskin: true,
+    detailPrakerin: true, detailDigital: true,
+    detailVokasi: true, detailCareer: true,
+    detailIplm: true, detailSeragam: true, detailBeasiswa: true,
+    // Berani Sehat
+    detailPemeriksaanGratis: true,
+    detailNasehaKami: true,
+    detailRsRujukan: true,
+    detailStunting: true,
+    detailKualitasRs: true,
+};
 
 const hitungFisikDanUang = (upload) => {
     let jumlahFisik = 0;
@@ -22,6 +37,9 @@ const hitungFisikDanUang = (upload) => {
     if (upload.detailVokasi?.length) upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     if (upload.detailCareer?.length) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     if (upload.detailIplm?.length) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
+    // Berani Sehat
+    const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
+    sehatArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
     const totalUang =
         sumNominal(upload.detailBosda) + sumNominal(upload.detailSpp) +
@@ -31,19 +49,17 @@ const hitungFisikDanUang = (upload) => {
         sumRealisasi(upload.detailDigital) +
         sumRealisasiRupiah(upload.detailVokasi) +
         sumRealisasiRupiah(upload.detailCareer) +
-        sumRealisasiRupiah(upload.detailIplm) + 
+        sumRealisasiRupiah(upload.detailIplm) +
         sumNominal(upload.detailSeragam) +
-        sumNominal(upload.detailBeasiswa);
+        sumNominal(upload.detailBeasiswa) +
+        // Berani Sehat
+        sumRealisasiAnggaran(upload.detailPemeriksaanGratis) +
+        sumRealisasiAnggaran(upload.detailNasehaKami) +
+        sumRealisasiAnggaran(upload.detailRsRujukan) +
+        sumRealisasiAnggaran(upload.detailStunting) +
+        sumRealisasiAnggaran(upload.detailKualitasRs);
 
     return { jumlahFisik, totalUang };
-};
-
-const INCLUDE_ALL = {
-    detailBosda: true, detailSpp: true,
-    detailBeasiswaCerdas: true, detailBeasiswaMiskin: true,
-    detailPrakerin: true, detailDigital: true,
-    detailVokasi: true, detailCareer: true,
-    detailIplm: true, detailSeragam: true, detailBeasiswa: true,
 };
 
 const kadisController = {
@@ -68,13 +84,11 @@ const kadisController = {
                     const targetFisik = targetData?.target ?? 0;
                     const paguAnggaran = targetData?.anggaran ? Number(targetData.anggaran) : 0;
                     let totalDisetujuiFisik = 0, totalUangRealisasi = 0;
-
                     sub.dataRealisasi.forEach(upload => {
                         const { jumlahFisik, totalUang } = hitungFisikDanUang(upload);
                         totalDisetujuiFisik += jumlahFisik;
                         totalUangRealisasi += totalUang;
                     });
-
                     const persentaseFisik = targetFisik > 0 ? (totalDisetujuiFisik / targetFisik) * 100 : 0;
                     const persentaseAnggaran = paguAnggaran > 0 ? (totalUangRealisasi / paguAnggaran) * 100 : 0;
                     return { id: sub.id, namaSubProgram: sub.namaSubProgram, slug: sub.slug, target: targetFisik, anggaran: paguAnggaran.toString(), realisasiTarget: totalDisetujuiFisik, persentaseTarget: `${persentaseFisik.toFixed(2)}%`, realisasiAnggaran: totalUangRealisasi.toString(), persentaseAnggaran: `${persentaseAnggaran.toFixed(2)}%` };
@@ -138,6 +152,12 @@ const kadisController = {
                 await tx.realisasiIplm.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiSeragam.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.realisasiBeasiswa.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                // Berani Sehat
+                await tx.realisasiPemeriksaanGratis.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                await tx.realisasiNasehaKami.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                await tx.realisasiRsRujukan.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                await tx.realisasiStunting.deleteMany({ where: { dataRealisasiId: Number(id) } });
+                await tx.realisasiKualitasRs.deleteMany({ where: { dataRealisasiId: Number(id) } });
                 await tx.dataRealisasi.update({ where: { id: Number(id) }, data: { statusVerifikasi: 'Ditolak', catatanRevisi: catatan, diVerifikasiOleh: req.user.id, tanggalVerifikasi: null } });
             });
             res.json({ status: "success", msg: "Laporan Berhasil Ditolak" });
@@ -167,6 +187,12 @@ const kadisController = {
             else if (headerData.detailCareer?.length > 0) { detailItems = headerData.detailCareer.map(item => ({ ...item, nominal: parseNom(item.realisasiRupiah) })); tipeLaporan = "Career Center"; }
             else if (headerData.detailIplm?.length > 0) { detailItems = headerData.detailIplm.map(item => ({ ...item, nominal: parseNom(item.realisasiRupiah) })); tipeLaporan = "IPLM"; }
             else if (headerData.detailSeragam?.length > 0) { detailItems = headerData.detailSeragam.map(item => ({ ...item, nominal: parseNom(item.nominal) })); tipeLaporan = "Seragam"; }
+            // Berani Sehat
+            else if (headerData.detailPemeriksaanGratis?.length > 0) { detailItems = headerData.detailPemeriksaanGratis.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Pemeriksaan Kesehatan Gratis"; }
+            else if (headerData.detailNasehaKami?.length > 0) { detailItems = headerData.detailNasehaKami.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Naseha Kami"; }
+            else if (headerData.detailRsRujukan?.length > 0) { detailItems = headerData.detailRsRujukan.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "RS Rujukan Internasional"; }
+            else if (headerData.detailStunting?.length > 0) { detailItems = headerData.detailStunting.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Pencegahan Stunting"; }
+            else if (headerData.detailKualitasRs?.length > 0) { detailItems = headerData.detailKualitasRs.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Kualitas Layanan RS"; }
 
             if (tipeLaporan === "") {
                 const slug = headerData.subProgram.slug.toLowerCase();
@@ -177,10 +203,15 @@ const kadisController = {
                 else if (slug.includes('prakerin')) tipeLaporan = "Prakerin";
                 else if (slug.includes('beasiswa')) tipeLaporan = "Beasiswa";
                 else if (slug.includes('digital') || slug.includes('sarana')) tipeLaporan = "Digitalisasi";
-                else if (slug.includes('vokasi') || slug.includes('siap-kerja')) tipeLaporan = "Vokasi";
+                else if (slug.includes('vokasi')) tipeLaporan = "Vokasi";
                 else if (slug.includes('career')) tipeLaporan = "Career Center";
                 else if (slug.includes('iplm') || slug.includes('literasi')) tipeLaporan = "IPLM";
                 else if (slug.includes('seragam')) tipeLaporan = "Seragam";
+                else if (slug.includes('pemeriksaan') || slug.includes('gratis')) tipeLaporan = "Pemeriksaan Kesehatan Gratis";
+                else if (slug.includes('naseha') || slug.includes('jaminan')) tipeLaporan = "Naseha Kami";
+                else if (slug.includes('rujukan') || slug.includes('internasional')) tipeLaporan = "RS Rujukan Internasional";
+                else if (slug.includes('stunting')) tipeLaporan = "Pencegahan Stunting";
+                else if (slug.includes('kualitas') || slug.includes('undata') || slug.includes('madani')) tipeLaporan = "Kualitas Layanan RS";
                 else tipeLaporan = "Umum";
             }
 
@@ -217,6 +248,12 @@ const kadisController = {
                 else if (header.detailIplm?.length) { header.detailIplm.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiRupiah) }); }); }
                 else if (header.detailSeragam?.length) { totalFisik += header.detailSeragam.length; header.detailSeragam.forEach(item => itemsList.push({ ...item, nominal: parseNom(item.nominal) })); }
                 else if (header.detailBeasiswa?.length) { totalFisik += header.detailBeasiswa.length; header.detailBeasiswa.forEach(item => itemsList.push({ ...item, nominal: parseNom(item.nominal) })); }
+                // Berani Sehat
+                else if (header.detailPemeriksaanGratis?.length) { header.detailPemeriksaanGratis.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailNasehaKami?.length) { header.detailNasehaKami.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailRsRujukan?.length) { header.detailRsRujukan.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailStunting?.length) { header.detailStunting.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailKualitasRs?.length) { header.detailKualitasRs.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
             });
 
             res.json({ status: "success", program: subProgram.programKerja.namaProgram, subProgram: subProgram.namaSubProgram, tahun, target: targetData?.target ?? 0, anggaran: targetData?.anggaran?.toString() ?? '0', totalRealisasi: totalFisik, data: itemsList });
