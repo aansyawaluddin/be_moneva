@@ -50,12 +50,12 @@ const monitoringWilayahController = {
                 processBosdaArray(header.detailBosda, 'kabupatenKota');
                 processSppArray(header.detailSpp, 'kabupatenKota');
                 header.detailBeasiswaCerdas?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSiswa) || 0, prog));
-                header.detailBeasiswaMiskin?.forEach(item => processItem(item.kabupaten || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
+                header.detailBeasiswaMiskin?.forEach(item => processItem(item.kabupaten || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 processPrakerinArray(header.detailPrakerin, 'kabupatenKota');
                 header.detailDigital?.forEach(item => processItem('Lainnya', parseNominal(item.realisasi), Number(item.jumlahSekolah) || 0, prog));
-                header.detailVokasi?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
-                header.detailCareer?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
-                header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiRupiah), Number(item.realisasiKinerja) || 0, prog));
+                header.detailVokasi?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailCareer?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
                 // Berani Sehat - semua level provinsi kecuali yg punya kabupaten

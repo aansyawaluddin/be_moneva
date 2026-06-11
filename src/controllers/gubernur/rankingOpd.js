@@ -38,19 +38,18 @@ const rankingOpdController = {
                     sub.dataRealisasi.forEach(upload => {
                         const sumNominal = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.nominal ? Number(curr.nominal.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
                         const sumRealisasi = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasi ? Number(curr.realisasi.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
-                        const sumRealisasiRupiah = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiRupiah ? Number(curr.realisasiRupiah.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
                         const sumRealisasiAnggaran = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiAnggaran ? Number(curr.realisasiAnggaran.toString()) : 0; return acc + (isNaN(n) ? 0 : n); }, 0); };
                         const sumPrakerin = (items) => { if (!items) return 0; return items.reduce((acc, curr) => { const n = curr.realisasiNegeri ? Number(curr.realisasiNegeri.toString()) : 0; const s = curr.realisasiSwasta ? Number(curr.realisasiSwasta.toString()) : 0; return acc + (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }, 0); };
 
                         realisasiUang += sumNominal(upload.detailBosda);
                         realisasiUang += sumNominal(upload.detailSpp);
                         realisasiUang += sumRealisasi(upload.detailBeasiswaCerdas);
-                        realisasiUang += sumRealisasiRupiah(upload.detailBeasiswaMiskin);
+                        realisasiUang += sumRealisasiAnggaran(upload.detailBeasiswaMiskin);
                         realisasiUang += sumPrakerin(upload.detailPrakerin);
                         realisasiUang += sumRealisasi(upload.detailDigital);
-                        realisasiUang += sumRealisasiRupiah(upload.detailVokasi);
-                        realisasiUang += sumRealisasiRupiah(upload.detailCareer);
-                        realisasiUang += sumRealisasiRupiah(upload.detailIplm);
+                        realisasiUang += sumRealisasiAnggaran(upload.detailVokasi);
+                        realisasiUang += sumRealisasiAnggaran(upload.detailCareer);
+                        realisasiUang += sumRealisasiAnggaran(upload.detailIplm);
                         realisasiUang += sumNominal(upload.detailSeragam);
                         realisasiUang += sumNominal(upload.detailBeasiswa);
                         // Berani Sehat

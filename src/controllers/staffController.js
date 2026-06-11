@@ -109,7 +109,7 @@ const staffController = {
             detailItems = detailItems.map(item => {
                 let f = { ...item };
                 if (tipeLaporan === "Beasiswa Cerdas Istimewa") f.nominal = parseNom(item.realisasi);
-                else if (["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM"].includes(tipeLaporan)) f.nominal = parseNom(item.realisasiRupiah);
+                else if (["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM"].includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
                 else if (tipeLaporan === "Digitalisasi") f.nominal = parseNom(item.realisasi);
                 else if (tipeLaporan === "Prakerin") f.nominal = parseNom(item.realisasiNegeri) + parseNom(item.realisasiSwasta);
                 else if (SEHAT_TYPES.includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
