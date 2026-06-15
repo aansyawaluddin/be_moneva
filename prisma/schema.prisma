@@ -128,6 +128,8 @@ model DataRealisasi {
   detailRsRujukan          RealisasiRsRujukan[]
   detailStunting           RealisasiStunting[]
   detailKualitasRs         RealisasiKualitasRs[]
+  detailAksesListrik  RealisasiAksesListrik[]
+  detailInternetDesa  RealisasiInternetDesa[]
 
 
   @@index([diInputOleh])
@@ -424,5 +426,44 @@ model RealisasiKualitasRs {
 
   @@index([dataRealisasiId])
   @@map("realisasi_kualitas_rs")
+}
+
+// Berani Menyala 
+model RealisasiAksesListrik {
+  id               Int      @id @default(autoincrement())
+  dataRealisasiId  Int      @map("data_realisasi_id")
+  namaProgram      String   @map("nama_program") @db.Text
+  kabupatenKota    String?  @map("kabupaten_kota")
+  satuan           String?  @map("satuan")
+  targetKinerja    Int      @default(0) @map("target_kinerja")
+  targetAnggaran   BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja Int      @default(0) @map("realisasi_kinerja")
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja   String?  @map("capaian_kinerja")
+  capaianAnggaran  String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_akses_listrik")
+}
+
+model RealisasiInternetDesa {
+  id               Int      @id @default(autoincrement())
+  dataRealisasiId  Int      @map("data_realisasi_id")
+  namaProgram      String   @map("nama_program") @db.Text
+  kabupatenKota    String?  @map("kabupaten_kota")
+  satuan           String?  @map("satuan")
+  targetKinerja    Int      @default(0) @map("target_kinerja")
+  targetAnggaran   BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja Int      @default(0) @map("realisasi_kinerja")
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja   String?  @map("capaian_kinerja")
+  capaianAnggaran  String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_internet_desa")
 }
 

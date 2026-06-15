@@ -12,6 +12,7 @@ const INCLUDE_ALL = {
     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
     detailPemeriksaanGratis: true, detailNasehaKami: true,
     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
+    detailAksesListrik: true, detailInternetDesa: true,
 };
 
 const staffController = {
@@ -41,7 +42,7 @@ const staffController = {
             const tahunSekarang = new Date().getFullYear();
             if (isNaN(tahun) || tahun < 2020 || tahun > tahunSekarang) { if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(400).json({ msg: `Tahun tidak valid. Masukkan tahun antara 2020 s/d ${tahunSekarang}.` }); }
             if (!file) return res.status(400).json({ msg: "File Excel wajib diupload" });
-            if (!subProgramId || isNaN(Number(subProgramId))) { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(400).json({ msg: "Sub Program ID kosong atau tidak valid. Pastikan urutan pengiriman FormData benar (Teks/ID ditaruh di atas, File ditaruh paling bawah)." }); }
+            if (!subProgramId || isNaN(Number(subProgramId))) { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(400).json({ msg: "Sub Program ID kosong atau tidak valid." }); }
             const subProgramCheck = await prisma.subProgramKerja.findFirst({ where: { id: Number(subProgramId), programKerjaId: Number(userProgramId) }, include: { targetTahunan: { where: { tahun } } } });
             if (!subProgramCheck) { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); return res.status(403).json({ msg: "Anda tidak berhak mengupload laporan untuk Sub Program ini." }); }
             if (subProgramCheck.targetTahunan.length === 0) console.warn(`⚠️  Upload untuk tahun ${tahun} tapi SubProgramTarget belum ada (subProgramId: ${subProgramId})`);
@@ -103,16 +104,17 @@ const staffController = {
             else if (headerData.detailRsRujukan?.length > 0) { detailItems = headerData.detailRsRujukan; tipeLaporan = "RS Rujukan Internasional"; }
             else if (headerData.detailStunting?.length > 0) { detailItems = headerData.detailStunting; tipeLaporan = "Pencegahan Stunting"; }
             else if (headerData.detailKualitasRs?.length > 0) { detailItems = headerData.detailKualitasRs; tipeLaporan = "Kualitas Layanan RS"; }
+            else if (headerData.detailAksesListrik?.length > 0) { detailItems = headerData.detailAksesListrik; tipeLaporan = "Akses Listrik"; }
+            else if (headerData.detailInternetDesa?.length > 0) { detailItems = headerData.detailInternetDesa; tipeLaporan = "Internet Desa"; }
 
-            const SEHAT_TYPES = ["Pemeriksaan Kesehatan Gratis", "Naseha Kami", "RS Rujukan Internasional", "Pencegahan Stunting", "Kualitas Layanan RS"];
+            const ANGGARAN_TYPES = ["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM", "Pemeriksaan Kesehatan Gratis", "Naseha Kami", "RS Rujukan Internasional", "Pencegahan Stunting", "Kualitas Layanan RS", "Akses Listrik", "Internet Desa"];
 
             detailItems = detailItems.map(item => {
                 let f = { ...item };
                 if (tipeLaporan === "Beasiswa Cerdas Istimewa") f.nominal = parseNom(item.realisasi);
-                else if (["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM"].includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
+                else if (ANGGARAN_TYPES.includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
                 else if (tipeLaporan === "Digitalisasi") f.nominal = parseNom(item.realisasi);
                 else if (tipeLaporan === "Prakerin") f.nominal = parseNom(item.realisasiNegeri) + parseNom(item.realisasiSwasta);
-                else if (SEHAT_TYPES.includes(tipeLaporan)) f.nominal = parseNom(item.realisasiAnggaran);
                 else f.nominal = parseNom(item.nominal);
                 return f;
             });

@@ -1,25 +1,16 @@
 import prisma from '../../utils/prisma.js';
 
-// Helper reuse
 const parseNominal = (val) => val ? Number(val.toString()) : 0;
 const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
 
-// Helper kalkulasi fisik & uang Berani Sehat (pakai realisasiKinerja & realisasiAnggaran)
-const hitungSehat = (arr) => {
-    let fisik = 0, uang = 0;
-    arr?.forEach(item => {
-        fisik += Number(item.realisasiKinerja) || 0;
-        uang += item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0;
-    });
-    return { fisik, uang };
+const INCLUDE_SEHAT = {
+    detailPemeriksaanGratis: true, detailNasehaKami: true,
+    detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
 };
 
-const INCLUDE_SEHAT = {
-    detailPemeriksaanGratis: true,
-    detailNasehaKami: true,
-    detailRsRujukan: true,
-    detailStunting: true,
-    detailKualitasRs: true,
+const INCLUDE_MENYALA = {
+    detailAksesListrik: true,
+    detailInternetDesa: true,
 };
 
 const monitoringController = {
@@ -36,14 +27,12 @@ const monitoringController = {
                             dataRealisasi: {
                                 where: { tahun },
                                 include: {
-                                    // Berani Cerdas
                                     detailBosda: true, detailSpp: true,
                                     detailBeasiswaCerdas: true, detailBeasiswaMiskin: true,
                                     detailPrakerin: true, detailDigital: true,
                                     detailVokasi: true, detailCareer: true,
                                     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
-                                    // Berani Sehat
-                                    ...INCLUDE_SEHAT,
+                                    ...INCLUDE_SEHAT, ...INCLUDE_MENYALA,
                                 }
                             }
                         }
@@ -63,7 +52,6 @@ const monitoringController = {
 
                     sub.dataRealisasi.forEach(upload => {
                         let jumlahFisik = 0;
-
                         jumlahFisik += upload.detailBeasiswa?.length || 0;
                         jumlahFisik += upload.detailSeragam?.length || 0;
                         if (upload.detailDigital?.length > 0) upload.detailDigital.forEach(item => { jumlahFisik += Number(item.jumlahSekolah) || 0; });
@@ -75,28 +63,20 @@ const monitoringController = {
                         if (upload.detailVokasi?.length > 0) upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
                         if (upload.detailCareer?.length > 0) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
                         if (upload.detailIplm?.length > 0) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
-                        // Berani Sehat
-                        const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
-                        sehatArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
+                        // Berani Sehat + Menyala
+                        const sehatMenyalaArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs, upload.detailAksesListrik, upload.detailInternetDesa];
+                        sehatMenyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
                         let uangLaporan = 0;
                         const sumNominal = (items) => { if (!items) return; items.forEach(item => { const n = item.nominal ? Number(item.nominal.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); };
                         const sumRealisasi = (items) => { if (!items) return; items.forEach(item => { const n = item.realisasi ? Number(item.realisasi.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); };
                         const sumRealisasiAnggaran = (items) => { if (!items) return; items.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); };
 
-                        sumNominal(upload.detailBeasiswa);
-                        sumNominal(upload.detailBosda);
-                        sumNominal(upload.detailSpp);
-                        sumNominal(upload.detailSeragam);
-                        sumRealisasi(upload.detailDigital);
-                        sumRealisasi(upload.detailBeasiswaCerdas);
-                        sumRealisasiAnggaran(upload.detailBeasiswaMiskin);
-                        sumRealisasiAnggaran(upload.detailVokasi);
-                        sumRealisasiAnggaran(upload.detailCareer);
-                        sumRealisasiAnggaran(upload.detailIplm);
+                        sumNominal(upload.detailBeasiswa); sumNominal(upload.detailBosda); sumNominal(upload.detailSpp); sumNominal(upload.detailSeragam);
+                        sumRealisasi(upload.detailDigital); sumRealisasi(upload.detailBeasiswaCerdas);
+                        sumRealisasiAnggaran(upload.detailBeasiswaMiskin); sumRealisasiAnggaran(upload.detailVokasi); sumRealisasiAnggaran(upload.detailCareer); sumRealisasiAnggaran(upload.detailIplm);
                         if (upload.detailPrakerin?.length > 0) { upload.detailPrakerin.forEach(item => { const n = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0; const s = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0; uangLaporan += (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }); }
-                        // Berani Sehat: pakai realisasiAnggaran
-                        sehatArrays.forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
+                        sehatMenyalaArrays.forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
 
                         if (upload.statusVerifikasi === 'Disetujui') { totalDisetujuiFisik += jumlahFisik; totalUangRealisasi += uangLaporan; }
                         else if (upload.statusVerifikasi === 'Menunggu') { totalMenungguFisik += jumlahFisik; }
@@ -104,7 +84,6 @@ const monitoringController = {
 
                     const persentaseFisik = targetFisik > 0 ? (totalDisetujuiFisik / targetFisik) * 100 : 0;
                     const persentaseKeuangan = paguAnggaran > 0 ? (totalUangRealisasi / paguAnggaran) * 100 : 0;
-
                     return {
                         id: sub.id, "Nama Sub Program": sub.namaSubProgram,
                         "Target Fisik": targetFisik, "Realisasi Fisik": totalDisetujuiFisik,
@@ -140,12 +119,16 @@ const monitoringController = {
             let data = [], type = "", totalFisik = 0;
             const getNominal = (val) => val ? Number(val.toString()) : 0;
 
-            // Helper untuk 5 model Berani Sehat yang punya format sama
-            const mapSehat = (raw, labelRincian = 'rincianKegiatan') => raw.map(item => {
+            // Helper untuk model dengan format Anggaran (Sehat & Menyala)
+            const mapAnggaran = (raw, namaField = 'rincianKegiatan') => raw.map(item => {
                 totalFisik += Number(item.realisasiKinerja) || 0;
+                const label = item[namaField] || item.namaProgram || item.program || '-';
+                const labelKey = namaField === 'namaProgram' ? "Nama Program"
+                    : namaField === 'program' ? "Program"
+                        : "Rincian Kegiatan";
                 return {
                     id: item.id,
-                    "Rincian Kegiatan": item[labelRincian] || item.program || '-',
+                    [labelKey]: label,
                     ...(item.kabupatenKota !== undefined && { "Kabupaten / Kota": item.kabupatenKota || '-' }),
                     "Satuan": item.satuan || '-',
                     "Target Kinerja": item.targetKinerja,
@@ -209,23 +192,33 @@ const monitoringController = {
             } else if (nameLower.includes('pemeriksaan kesehatan gratis') || nameLower.includes('dukungan terhadap pelaksanaan')) {
                 type = "pemeriksaan-gratis";
                 const raw = await prisma.realisasiPemeriksaanGratis.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
-                data = mapSehat(raw);
+                data = mapAnggaran(raw);
             } else if (nameLower.includes('naseha') || nameLower.includes('jaminan layanan kesehatan')) {
                 type = "naseha-kami";
                 const raw = await prisma.realisasiNasehaKami.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
-                data = mapSehat(raw);
+                data = mapAnggaran(raw);
             } else if (nameLower.includes('rujukan') || nameLower.includes('internasional')) {
                 type = "rs-rujukan";
                 const raw = await prisma.realisasiRsRujukan.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
-                data = mapSehat(raw);
+                data = mapAnggaran(raw);
             } else if (nameLower.includes('stunting')) {
                 type = "stunting";
                 const raw = await prisma.realisasiStunting.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
-                data = mapSehat(raw, 'program');
+                data = mapAnggaran(raw, 'program');
             } else if (nameLower.includes('kualitas layanan') || (nameLower.includes('undata') && nameLower.includes('madani'))) {
                 type = "kualitas-rs";
                 const raw = await prisma.realisasiKualitasRs.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
-                data = mapSehat(raw);
+                data = mapAnggaran(raw);
+
+                // ===== BERANI MENYALA =====
+            } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {
+                type = "akses-listrik";
+                const raw = await prisma.realisasiAksesListrik.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = mapAnggaran(raw, 'namaProgram');
+            } else if (nameLower.includes('internet') || nameLower.includes('blank spot') || nameLower.includes('jaringan')) {
+                type = "internet-desa";
+                const raw = await prisma.realisasiInternetDesa.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = mapAnggaran(raw, 'namaProgram');
 
             } else {
                 return res.json({ status: "success", msg: "Belum ada data detail untuk tipe sub program ini.", program: subProgram.programKerja.namaProgram, subProgram: subProgram.namaSubProgram, tahun, data: [] });

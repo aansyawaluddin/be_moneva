@@ -20,6 +20,7 @@ const monitoringWilayahController = {
                     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
                     detailPemeriksaanGratis: true, detailNasehaKami: true,
                     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
+                    detailAksesListrik: true, detailInternetDesa: true,
                 }
             });
 
@@ -58,12 +59,14 @@ const monitoringWilayahController = {
                 header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
-                // Berani Sehat - semua level provinsi kecuali yg punya kabupaten
                 header.detailPemeriksaanGratis?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailNasehaKami?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailRsRujukan?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailStunting?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailKualitasRs?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Menyala - per kabupaten
+                header.detailAksesListrik?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailInternetDesa?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
             });
 
             const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
