@@ -33,8 +33,10 @@ const hitungFisikDanUang = (upload) => {
     if (upload.detailVokasi?.length) upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     if (upload.detailCareer?.length) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     if (upload.detailIplm?.length) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
-    const anggaranArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs, upload.detailAksesListrik, upload.detailInternetDesa];
-    anggaranArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
+    const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
+    const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
+    sehatArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
+    menyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
     const totalUang =
         sumNominal(upload.detailBosda) + sumNominal(upload.detailSpp) +

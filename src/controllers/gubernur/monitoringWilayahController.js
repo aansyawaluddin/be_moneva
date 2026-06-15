@@ -33,10 +33,12 @@ const monitoringWilayahController = {
                 const namaKota = cleanName(kabupaten); const uang = Number(nominal) || 0; const penerima = Number(jumlahPenerima) || 0;
                 rekapProvinsi.totalPenerima += penerima; rekapProvinsi.totalRealisasi += uang;
                 if (rekapProvinsi.programs[namaProgram]) { rekapProvinsi.programs[namaProgram].totalPenerima += penerima; rekapProvinsi.programs[namaProgram].totalRealisasi += uang; }
-                if (!mapWilayah[namaKota]) mapWilayah[namaKota] = { namaKabupaten: namaKota, totalPenerima: 0, totalRealisasi: 0, programs: {} };
-                mapWilayah[namaKota].totalPenerima += penerima; mapWilayah[namaKota].totalRealisasi += uang;
-                if (!mapWilayah[namaKota].programs[namaProgram]) mapWilayah[namaKota].programs[namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
-                mapWilayah[namaKota].programs[namaProgram].totalPenerima += penerima; mapWilayah[namaKota].programs[namaProgram].totalRealisasi += uang;
+                // Kalau tidak dikenal (gabungan, dsb) → masuk ke LAINNYA
+                const targetKota = mapWilayah[namaKota] ? namaKota : 'LAINNYA';
+                if (!mapWilayah[targetKota]) mapWilayah[targetKota] = { namaKabupaten: targetKota, totalPenerima: 0, totalRealisasi: 0, programs: {} };
+                mapWilayah[targetKota].totalPenerima += penerima; mapWilayah[targetKota].totalRealisasi += uang;
+                if (!mapWilayah[targetKota].programs[namaProgram]) mapWilayah[targetKota].programs[namaProgram] = { totalPenerima: 0, totalRealisasi: 0 };
+                mapWilayah[targetKota].programs[namaProgram].totalPenerima += penerima; mapWilayah[targetKota].programs[namaProgram].totalRealisasi += uang;
             };
 
             const parseNominal = (val) => val ? Number(val.toString()) : 0;
@@ -59,11 +61,12 @@ const monitoringWilayahController = {
                 header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
-                header.detailPemeriksaanGratis?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
-                header.detailNasehaKami?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
-                header.detailRsRujukan?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
-                header.detailStunting?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
-                header.detailKualitasRs?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Sehat: realisasiKinerja bisa desimal (%) → pakai 1 per baris sebagai penerima
+                header.detailPemeriksaanGratis?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailNasehaKami?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailRsRujukan?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailStunting?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailKualitasRs?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 // Berani Menyala - per kabupaten
                 header.detailAksesListrik?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailInternetDesa?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
@@ -77,7 +80,18 @@ const monitoringWilayahController = {
             const dataProvinsi = { namaKabupaten: "SULAWESI TENGAH (TOTAL PROVINSI)", totalPenerima: rekapProvinsi.totalPenerima, totalRealisasi: formatRupiah(rekapProvinsi.totalRealisasi), persentaseTotal: persenProvD, persentaseTotalString: `${persenProvD.toString().replace('.', ',')}%`, detailProgram: buildProgramList(rekapProvinsi.programs) };
 
             let finalData = Object.keys(mapWilayah).map(rawName => { const kota = mapWilayah[rawName]; const persen = totalAnggaranProvinsi > 0 ? (kota.totalRealisasi / totalAnggaranProvinsi) * 100 : 0; const persenD = Number(persen.toFixed(3)); return { namaKabupaten: DISPLAY_WILAYAH[rawName] || rawName, totalPenerima: kota.totalPenerima, totalRealisasi: formatRupiah(kota.totalRealisasi), persentaseTotal: persenD, persentaseTotalString: `${persenD.toString().replace('.', ',')}%`, detailProgram: buildProgramList(kota.programs) }; });
-            finalData.sort((a, b) => a.namaKabupaten.localeCompare(b.namaKabupaten));
+            // Wilayah resmi selalu di atas, Lainnya paling bawah
+            const URUTAN_RESMI = Object.values(DISPLAY_WILAYAH).filter(v => v !== 'Lainnya');
+            finalData.sort((a, b) => {
+                const idxA = URUTAN_RESMI.indexOf(a.namaKabupaten);
+                const idxB = URUTAN_RESMI.indexOf(b.namaKabupaten);
+                const isLainnyaA = idxA === -1;
+                const isLainnyaB = idxB === -1;
+                if (!isLainnyaA && !isLainnyaB) return idxA - idxB; // keduanya resmi → urut sesuai URUTAN_RESMI
+                if (!isLainnyaA) return -1; // A resmi, B tidak → A duluan
+                if (!isLainnyaB) return 1;  // B resmi, A tidak → B duluan
+                return a.namaKabupaten.localeCompare(b.namaKabupaten); // keduanya tidak resmi → alfabet
+            });
             finalData.unshift(dataProvinsi);
 
             res.json({ status: "success", msg: "Data Monitoring Sebaran Wilayah", tahun, data: finalData });

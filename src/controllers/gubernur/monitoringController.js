@@ -65,7 +65,12 @@ const monitoringController = {
                         if (upload.detailIplm?.length > 0) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
                         // Berani Sehat + Menyala
                         const sehatMenyalaArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs, upload.detailAksesListrik, upload.detailInternetDesa];
-                        sehatMenyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
+                        // Berani Sehat: realisasiKinerja bisa desimal (%) → hitung 1 per baris
+                        // Berani Menyala: realisasiKinerja adalah jumlah unit → pakai nilai aslinya
+                        const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
+                        const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
+                        sehatArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
+                        menyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
                         let uangLaporan = 0;
                         const sumNominal = (items) => { if (!items) return; items.forEach(item => { const n = item.nominal ? Number(item.nominal.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); };
@@ -76,7 +81,7 @@ const monitoringController = {
                         sumRealisasi(upload.detailDigital); sumRealisasi(upload.detailBeasiswaCerdas);
                         sumRealisasiAnggaran(upload.detailBeasiswaMiskin); sumRealisasiAnggaran(upload.detailVokasi); sumRealisasiAnggaran(upload.detailCareer); sumRealisasiAnggaran(upload.detailIplm);
                         if (upload.detailPrakerin?.length > 0) { upload.detailPrakerin.forEach(item => { const n = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0; const s = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0; uangLaporan += (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }); }
-                        sehatMenyalaArrays.forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
+                        [...sehatArrays, ...menyalaArrays].forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
 
                         if (upload.statusVerifikasi === 'Disetujui') { totalDisetujuiFisik += jumlahFisik; totalUangRealisasi += uangLaporan; }
                         else if (upload.statusVerifikasi === 'Menunggu') { totalMenungguFisik += jumlahFisik; }
