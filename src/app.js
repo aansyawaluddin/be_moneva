@@ -9,6 +9,7 @@ import gubernurRoutes from './routes/gubernurRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import kadisRoutes from './routes/kadisRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import superAdminRoutes from './routes/superAdminRoutes.js';
 
 dotenv.config();
 
@@ -41,7 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/gubernur', gubernurRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/kadis', kadisRoutes);
-
+app.use('/api/superadmin', superAdminRoutes);
 
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
