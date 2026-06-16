@@ -4,8 +4,6 @@ const indikator9Controller = {
 
     getAllPrograms: async (req, res) => {
         try {
-            const tahun = Number(req.query.tahun) || new Date().getFullYear();
-
             const programs = await prisma.programKerja.findMany({
                 orderBy: { id: 'asc' },
                 include: {
@@ -58,10 +56,7 @@ const indikator9Controller = {
                         select: {
                             id: true,
                             nilaiCapaian: true,
-                            tanggalInput: true,
-                            inputer: {
-                                select: { id: true, username: true, dinas: true }
-                            }
+                            tanggalInput: true
                         }
                     }
                 }
@@ -78,8 +73,7 @@ const indikator9Controller = {
                         ? {
                             id: capaianTahunIni.id,
                             nilaiCapaian: capaianTahunIni.nilaiCapaian?.toString() ?? null,
-                            tanggalInput: capaianTahunIni.tanggalInput,
-                            diInputOleh: capaianTahunIni.inputer
+                            tanggalInput: capaianTahunIni.tanggalInput
                         }
                         : null
                 };
@@ -99,7 +93,7 @@ const indikator9Controller = {
         }
     },
 
-    upsertCapaian: async (req, res) => {
+    createCapaian: async (req, res) => {
         try {
             const { programSlug, indikatorId } = req.params;
             const { tahun, nilaiCapaian } = req.body;
@@ -139,21 +133,25 @@ const indikator9Controller = {
                 });
             }
 
-            const capaian = await prisma.capaianIndikator9.upsert({
+            const sudahAda = await prisma.capaianIndikator9.findUnique({
                 where: {
                     indikatorId_tahun: {
                         indikatorId: indikator.id,
                         tahun: tahunInt
                     }
-                },
-                create: {
+                }
+            });
+
+            if (sudahAda) {
+                return res.status(409).json({
+                    msg: `Capaian tahun ${tahunInt} untuk indikator ini sudah ada.`
+                });
+            }
+
+            const capaian = await prisma.capaianIndikator9.create({
+                data: {
                     indikatorId: indikator.id,
                     tahun: tahunInt,
-                    nilaiCapaian: nilaiCapaian,
-                    diInputOleh: superAdminId,
-                    tanggalInput: new Date()
-                },
-                update: {
                     nilaiCapaian: nilaiCapaian,
                     diInputOleh: superAdminId,
                     tanggalInput: new Date()
@@ -161,16 +159,13 @@ const indikator9Controller = {
                 include: {
                     indikator: {
                         select: { namaIndikator: true, satuan: true, opd: true }
-                    },
-                    inputer: {
-                        select: { id: true, username: true }
                     }
                 }
             });
 
-            return res.json({
+            return res.status(201).json({
                 status: 'success',
-                msg: `Capaian indikator tahun ${tahunInt} berhasil disimpan`,
+                msg: `Capaian indikator tahun ${tahunInt} berhasil ditambahkan`,
                 data: {
                     id: capaian.id,
                     indikator: capaian.indikator.namaIndikator,
@@ -178,7 +173,97 @@ const indikator9Controller = {
                     opd: capaian.indikator.opd,
                     tahun: capaian.tahun,
                     nilaiCapaian: capaian.nilaiCapaian?.toString(),
-                    diInputOleh: capaian.inputer,
+                    tanggalInput: capaian.tanggalInput
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ msg: error.message });
+        }
+    },
+
+    updateCapaian: async (req, res) => {
+        try {
+            const { programSlug, indikatorId, tahun } = req.params;
+            const { nilaiCapaian } = req.body;
+            const superAdminId = req.user.id;
+
+            if (nilaiCapaian === undefined || nilaiCapaian === null) {
+                return res.status(400).json({ msg: 'Field nilaiCapaian wajib diisi' });
+            }
+
+            const tahunInt = Number(tahun);
+            if (isNaN(tahunInt) || tahunInt < 2020 || tahunInt > 2100) {
+                return res.status(400).json({ msg: 'Tahun tidak valid' });
+            }
+
+            const program = await prisma.programKerja.findUnique({
+                where: { slug: programSlug }
+            });
+
+            if (!program) {
+                return res.status(404).json({
+                    msg: `Program "${programSlug}" tidak ditemukan`
+                });
+            }
+
+            const indikator = await prisma.indikator9.findFirst({
+                where: {
+                    id: Number(indikatorId),
+                    programKerjaId: program.id
+                }
+            });
+
+            if (!indikator) {
+                return res.status(404).json({
+                    msg: `Indikator ID ${indikatorId} tidak ditemukan di program ini`
+                });
+            }
+
+            const existing = await prisma.capaianIndikator9.findUnique({
+                where: {
+                    indikatorId_tahun: {
+                        indikatorId: indikator.id,
+                        tahun: tahunInt
+                    }
+                }
+            });
+
+            if (!existing) {
+                return res.status(404).json({
+                    msg: `Capaian tahun ${tahunInt} untuk indikator ini belum ada. Gunakan POST untuk menambahkan.`
+                });
+            }
+
+            const capaian = await prisma.capaianIndikator9.update({
+                where: {
+                    indikatorId_tahun: {
+                        indikatorId: indikator.id,
+                        tahun: tahunInt
+                    }
+                },
+                data: {
+                    nilaiCapaian: nilaiCapaian,
+                    diInputOleh: superAdminId,
+                    tanggalInput: new Date()
+                },
+                include: {
+                    indikator: {
+                        select: { namaIndikator: true, satuan: true, opd: true }
+                    }
+                }
+            });
+
+            return res.json({
+                status: 'success',
+                msg: `Capaian indikator tahun ${tahunInt} berhasil diperbarui`,
+                data: {
+                    id: capaian.id,
+                    indikator: capaian.indikator.namaIndikator,
+                    satuan: capaian.indikator.satuan,
+                    opd: capaian.indikator.opd,
+                    tahun: capaian.tahun,
+                    nilaiCapaian: capaian.nilaiCapaian?.toString(),
                     tanggalInput: capaian.tanggalInput
                 }
             });
@@ -213,10 +298,7 @@ const indikator9Controller = {
 
             const riwayat = await prisma.capaianIndikator9.findMany({
                 where: { indikatorId: indikator.id },
-                orderBy: { tahun: 'desc' },
-                include: {
-                    inputer: { select: { id: true, username: true, dinas: true } }
-                }
+                orderBy: { tahun: 'desc' }
             });
 
             return res.json({
@@ -229,8 +311,7 @@ const indikator9Controller = {
                     id: r.id,
                     tahun: r.tahun,
                     nilaiCapaian: r.nilaiCapaian?.toString() ?? null,
-                    tanggalInput: r.tanggalInput,
-                    diInputOleh: r.inputer
+                    tanggalInput: r.tanggalInput
                 }))
             });
         } catch (error) {
