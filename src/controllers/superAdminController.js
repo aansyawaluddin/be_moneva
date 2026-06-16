@@ -26,8 +26,6 @@ const indikator9Controller = {
             return res.json({
                 status: 'success',
                 msg: 'Daftar 9 Program Kerja Berani',
-                tahun,
-                total: data.length,
                 data
             });
         } catch (error) {
