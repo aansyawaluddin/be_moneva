@@ -18,10 +18,9 @@ const process = async (tx, headerId, filePath) => {
             nik: String(row['NIK'] || '-').trim(),
             nim: String(row['NIM'] || row['No. Registrasi'] || '-').trim(),
             programStudi: row['Program Studi'] ? String(row['Program Studi']).trim() : '-',
-            alamat: row['Alamat'] ? String(row['Alamat']).trim() : null,
             kabupaten: row['Kabupaten/Kota'] ? String(row['Kabupaten/Kota']).trim() : 'Palu',
             institusiTujuan: (row['Universitas'] || row['Sekolah']) ? String(row['Universitas'] || row['Sekolah']).trim() : '-',
-            jalur: row['Jalur Pendaftaran'] ? String(row['Jalur Pendaftaran']).trim() : '-',
+            jalur: row['Jalur'] ? String(row['Jalur']).trim() : '-',
             nominal: parsedNominal,
             kontakPenerima: String(row['Kontak'] || '-').trim()
         };

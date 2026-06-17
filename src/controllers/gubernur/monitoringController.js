@@ -63,10 +63,6 @@ const monitoringController = {
                         if (upload.detailVokasi?.length > 0) upload.detailVokasi.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
                         if (upload.detailCareer?.length > 0) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
                         if (upload.detailIplm?.length > 0) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
-                        // Berani Sehat + Menyala
-                        const sehatMenyalaArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs, upload.detailAksesListrik, upload.detailInternetDesa];
-                        // Berani Sehat: realisasiKinerja bisa desimal (%) → hitung 1 per baris
-                        // Berani Menyala: realisasiKinerja adalah jumlah unit → pakai nilai aslinya
                         const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
                         const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
                         sehatArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
@@ -191,7 +187,18 @@ const monitoringController = {
                 type = "beasiswa";
                 const raw = await prisma.realisasiBeasiswa.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
                 totalFisik = raw.length;
-                data = raw.map(item => ({ id: item.id, "Nama Penerima": item.namaPenerima, "NIK": item.nik || '-', "NIM": item.nim || '-', "Program Studi": item.programStudi || '-', "Institusi Tujuan": item.institusiTujuan, "Kabupaten / Kota": item.kabupaten, "Alamat Lengkap": item.alamat || '-', "Jalur Pendaftaran": item.jalur || '-', "Nominal Bantuan": formatRp(getNominal(item.nominal)), "Kontak Penerima": item.kontakPenerima || '-' }));
+                data = raw.map(item => ({
+                    id: item.id,
+                    "Nama Penerima": item.namaPenerima,
+                    "NIK": item.nik || '-',
+                    "NIM": item.nim || '-',
+                    "Program Studi": item.programStudi || '-',
+                    "Institusi Tujuan": item.institusiTujuan,
+                    "Kabupaten / Kota": item.kabupaten,
+                    "Jalur": item.jalur || '-',
+                    "Nominal Bantuan": formatRp(getNominal(item.nominal)),
+                    "Kontak Penerima": item.kontakPenerima || '-'
+                }));
 
                 // ===== BERANI SEHAT =====
             } else if (nameLower.includes('pemeriksaan kesehatan gratis') || nameLower.includes('dukungan terhadap pelaksanaan')) {
