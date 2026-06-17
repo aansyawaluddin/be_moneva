@@ -5,6 +5,7 @@ import monitoringController from '../controllers/gubernur/monitoringController.j
 import monitoringWilayahController from '../controllers/gubernur/monitoringWilayahController.js';
 import programKerjaController from '../controllers/gubernur/programKerjaController.js';
 import rankingOpdController from '../controllers/gubernur/rankingOpd.js';
+import indikator9Controller from '../controllers/gubernur/indikator9Controller.js';
 
 const router = express.Router();
 router.use(verifyToken, verifyGovernor);
@@ -35,5 +36,8 @@ router.get('/monitoring/wilayah', monitoringWilayahController.getMonitoringWilay
 router.get('/program/:programSlug/:subProgramSlug', monitoringController.getMonitoringDetail);
 
 router.get('/rangking-opd', rankingOpdController.getRankingOpd);
+
+router.get('/indikator9/program', indikator9Controller.getAllPrograms);
+router.get('/indikator9/program/:programSlug', indikator9Controller.getIndikatorByProgram);
 
 export default router;
