@@ -166,14 +166,18 @@ model DataRealisasi {
   detailRsRujukan         RealisasiRsRujukan[]
   detailStunting          RealisasiStunting[]
   detailKualitasRs        RealisasiKualitasRs[]
-  detailAksesListrik      RealisasiAksesListrik[]
-  detailInternetDesa      RealisasiInternetDesa[]
   detailJaminanHarga      RealisasiJaminanHarga[]
   detailPanada            RealisasiPanada[]
   detailUep               RealisasiUep[]
   detailRutilahu          RealisasiRutilahu[]
   detailUmkm              RealisasiUmkm[]
   detailMbg               RealisasiMbg[]
+  detailGaspoll           RealisasiGaspoll[]
+  detailSpbe              RealisasiSpbe[]
+  detailBudayaKerja       RealisasiBudayaKerja[]
+  detailBantuanKeuangan   RealisasiBantuanKeuangan[]
+  detailAksesListrik      RealisasiAksesListrik[]
+  detailInternetDesa      RealisasiInternetDesa[]
 
   @@index([diInputOleh])
   @@index([diVerifikasiOleh])
@@ -622,3 +626,81 @@ model RealisasiInternetDesa {
   @@index([dataRealisasiId])
   @@map("realisasi_internet_desa")
 }
+
+// BERANI INTEGRITAS
+
+model RealisasiGaspoll {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja    String?  @map("capaian_kinerja")
+  capaianAnggaran   String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_gaspoll")
+}
+
+model RealisasiSpbe {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja    String?  @map("capaian_kinerja")
+  capaianAnggaran   String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_spbe")
+}
+
+model RealisasiBudayaKerja {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  rincianKegiatan   String?  @map("rincian_kegiatan") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja    String?  @map("capaian_kinerja")
+  capaianAnggaran   String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_budaya_kerja")
+}
+
+model RealisasiBantuanKeuangan {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  rincianKegiatan   String?  @map("rincian_kegiatan") @db.Text
+  kabupatenKota     String?  @map("kabupaten_kota") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  capaianKinerja    String?  @map("capaian_kinerja")
+  capaianAnggaran   String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_bantuan_keuangan")
+}
+

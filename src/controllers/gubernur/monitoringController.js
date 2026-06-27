@@ -13,6 +13,11 @@ const INCLUDE_SEJAHTERA = {
     detailRutilahu: true, detailUmkm: true, detailMbg: true,
 };
 
+const INCLUDE_INTEGRITAS = {
+    detailGaspoll: true, detailSpbe: true,
+    detailBudayaKerja: true, detailBantuanKeuangan: true,
+};
+
 const INCLUDE_MENYALA = {
     detailAksesListrik: true,
     detailInternetDesa: true,
@@ -37,7 +42,7 @@ const monitoringController = {
                                     detailPrakerin: true, detailDigital: true,
                                     detailVokasi: true, detailCareer: true,
                                     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
-                                    ...INCLUDE_SEHAT, ...INCLUDE_SEJAHTERA, ...INCLUDE_MENYALA,
+                                    ...INCLUDE_SEHAT, ...INCLUDE_SEJAHTERA, ...INCLUDE_INTEGRITAS, ...INCLUDE_MENYALA,
                                 }
                             }
                         }
@@ -73,7 +78,9 @@ const monitoringController = {
                         const sejahteraArrays = [upload.detailJaminanHarga, upload.detailPanada, upload.detailUep, upload.detailRutilahu, upload.detailUmkm, upload.detailMbg];
                         const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
                         sehatArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
-                        sejahteraArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
+                        sejahteraArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
+                        const integritasArrays = [upload.detailGaspoll, upload.detailSpbe, upload.detailBudayaKerja, upload.detailBantuanKeuangan];
+                        integritasArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
                         menyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
                         let uangLaporan = 0;
@@ -85,7 +92,7 @@ const monitoringController = {
                         sumRealisasi(upload.detailDigital); sumRealisasi(upload.detailBeasiswaCerdas);
                         sumRealisasiAnggaran(upload.detailBeasiswaMiskin); sumRealisasiAnggaran(upload.detailVokasi); sumRealisasiAnggaran(upload.detailCareer); sumRealisasiAnggaran(upload.detailIplm);
                         if (upload.detailPrakerin?.length > 0) { upload.detailPrakerin.forEach(item => { const n = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0; const s = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0; uangLaporan += (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }); }
-                        [...sehatArrays, ...sejahteraArrays, ...menyalaArrays].forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
+                        [...sehatArrays, ...sejahteraArrays, ...integritasArrays, ...menyalaArrays].forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
 
                         if (upload.statusVerifikasi === 'Disetujui') { totalDisetujuiFisik += jumlahFisik; totalUangRealisasi += uangLaporan; }
                         else if (upload.statusVerifikasi === 'Menunggu') { totalMenungguFisik += jumlahFisik; }
@@ -233,6 +240,24 @@ const monitoringController = {
                 type = "kualitas-rs";
                 const raw = await prisma.realisasiKualitasRs.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
                 data = mapAnggaran(raw);
+
+                // ===== BERANI INTEGRITAS =====
+            } else if (nameLower.includes('gaspoll') || nameLower.includes('command center') || nameLower.includes('call center') || nameLower.includes('siaga laporan')) {
+                type = "gaspoll";
+                const raw = await prisma.realisasiGaspoll.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { totalFisik += 1; return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)), "Capaian Kinerja (%)": item.capaianKinerja || '-', "Capaian Anggaran (%)": item.capaianAnggaran || '-' }; });
+            } else if (nameLower.includes('spbe') || nameLower.includes('super app') || nameLower.includes('super aps') || nameLower.includes('layanan publik terintegrasi')) {
+                type = "spbe";
+                const raw = await prisma.realisasiSpbe.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { totalFisik += 1; return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)), "Capaian Kinerja (%)": item.capaianKinerja || '-', "Capaian Anggaran (%)": item.capaianAnggaran || '-' }; });
+            } else if (nameLower.includes('budaya kerja') || nameLower.includes('birokrasi') || nameLower.includes('akuntabel') || nameLower.includes('reformasi birokrasi')) {
+                type = "budaya-kerja";
+                const raw = await prisma.realisasiBudayaKerja.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { totalFisik += 1; return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Rincian Kegiatan": item.rincianKegiatan || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)), "Capaian Kinerja (%)": item.capaianKinerja || '-', "Capaian Anggaran (%)": item.capaianAnggaran || '-' }; });
+            } else if (nameLower.includes('bantuan keuangan') || nameLower.includes('pemerintah desa') || nameLower.includes('pemerintah des')) {
+                type = "bantuan-keuangan";
+                const raw = await prisma.realisasiBantuanKeuangan.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { totalFisik += 1; return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Rincian Kegiatan": item.rincianKegiatan || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)), "Capaian Kinerja (%)": item.capaianKinerja || '-', "Capaian Anggaran (%)": item.capaianAnggaran || '-' }; });
 
                 // ===== BERANI SEJAHTERA =====
             } else if (nameLower.includes('jaminan') || nameLower.includes('bahan pokok')) {

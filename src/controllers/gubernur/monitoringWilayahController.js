@@ -22,6 +22,7 @@ const monitoringWilayahController = {
                     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
                     detailJaminanHarga: true, detailPanada: true, detailUep: true,
                     detailRutilahu: true, detailUmkm: true, detailMbg: true,
+                    detailGaspoll: true, detailSpbe: true, detailBudayaKerja: true, detailBantuanKeuangan: true,
                     detailAksesListrik: true, detailInternetDesa: true,
                 }
             });
@@ -86,6 +87,11 @@ const monitoringWilayahController = {
                 header.detailRutilahu?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailUmkm?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailMbg?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Integritas (tidak ada kabupaten spesifik → masuk Lainnya)
+                header.detailGaspoll?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailSpbe?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailBudayaKerja?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailBantuanKeuangan?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 // Berani Menyala
                 header.detailAksesListrik?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailInternetDesa?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));

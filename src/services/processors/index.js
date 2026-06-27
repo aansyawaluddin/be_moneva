@@ -29,6 +29,12 @@ import mbgProcessor from './berani_sejahtera/mbgProcessor.js';
 import aksesListrikProcessor from './berani_menyala/aksesListrikProcessor.js';
 import internetDesaProcessor from './berani_menyala/internetDesaProcessor.js';
 
+// Berani Integritas
+import gaspollProcessor from './berani_integritas/gaspollProcessor.js';
+import spbeProcessor from './berani_integritas/spbeProcessor.js';
+import budayaKerjaProcessor from './berani_integritas/budayaKerjaProcessor.js';
+import bantuanKeuanganProcessor from './berani_integritas/bantuanKeuanganProcessor.js';
+
 const processorRegistry = {
     // Berani Cerdas
     'bosda': bosdaProcessor,
@@ -58,6 +64,11 @@ const processorRegistry = {
     // Berani Menyala
     'akses-listrik': aksesListrikProcessor,
     'internet-desa': internetDesaProcessor,
+    // Berani Integritas
+    'gaspoll': gaspollProcessor,
+    'spbe': spbeProcessor,
+    'budaya-kerja': budayaKerjaProcessor,
+    'bantuan-keuangan': bantuanKeuanganProcessor,
 };
 
 export const getProcessor = (subProgramName) => {
@@ -117,6 +128,16 @@ export const getProcessor = (subProgramName) => {
         foundKey = 'umkm';
     } else if (nameLower.includes('mbg') || nameLower.includes('makan bergizi')) {
         foundKey = 'mbg';
+
+        // ===== BERANI INTEGRITAS =====
+    } else if (nameLower.includes('gaspoll') || nameLower.includes('command center') || nameLower.includes('call center') || nameLower.includes('siaga laporan')) {
+        foundKey = 'gaspoll';
+    } else if (nameLower.includes('spbe') || nameLower.includes('super app') || nameLower.includes('super aps') || nameLower.includes('layanan publik terintegrasi')) {
+        foundKey = 'spbe';
+    } else if (nameLower.includes('budaya kerja') || nameLower.includes('birokrasi') || nameLower.includes('akuntabel') || nameLower.includes('reformasi birokrasi')) {
+        foundKey = 'budaya-kerja';
+    } else if (nameLower.includes('bantuan keuangan') || nameLower.includes('pemerintah desa') || nameLower.includes('pemerintah des')) {
+        foundKey = 'bantuan-keuangan';
 
         // ===== BERANI MENYALA =====
     } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {

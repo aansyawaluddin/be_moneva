@@ -14,6 +14,7 @@ const INCLUDE_ALL = {
     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
     detailJaminanHarga: true, detailPanada: true, detailUep: true,
     detailRutilahu: true, detailUmkm: true, detailMbg: true,
+    detailGaspoll: true, detailSpbe: true, detailBudayaKerja: true, detailBantuanKeuangan: true,
     detailAksesListrik: true, detailInternetDesa: true,
 };
 
@@ -112,6 +113,10 @@ const staffController = {
             else if (headerData.detailRutilahu?.length > 0) { detailItems = headerData.detailRutilahu; tipeLaporan = "Revitalisasi Rutilahu"; }
             else if (headerData.detailUmkm?.length > 0) { detailItems = headerData.detailUmkm; tipeLaporan = "Pelatihan UMKM"; }
             else if (headerData.detailMbg?.length > 0) { detailItems = headerData.detailMbg; tipeLaporan = "Makan Bergizi Gratis"; }
+            else if (headerData.detailGaspoll?.length > 0) { detailItems = headerData.detailGaspoll; tipeLaporan = "Tim Gaspoll / Command Center"; }
+            else if (headerData.detailSpbe?.length > 0) { detailItems = headerData.detailSpbe; tipeLaporan = "Super Apps / SPBE"; }
+            else if (headerData.detailBudayaKerja?.length > 0) { detailItems = headerData.detailBudayaKerja; tipeLaporan = "Budaya Kerja Birokrasi"; }
+            else if (headerData.detailBantuanKeuangan?.length > 0) { detailItems = headerData.detailBantuanKeuangan; tipeLaporan = "Bantuan Keuangan Pemerintah Desa"; }
             else if (headerData.detailAksesListrik?.length > 0) { detailItems = headerData.detailAksesListrik; tipeLaporan = "Akses Listrik"; }
             else if (headerData.detailInternetDesa?.length > 0) { detailItems = headerData.detailInternetDesa; tipeLaporan = "Internet Desa"; }
 
@@ -121,6 +126,7 @@ const staffController = {
                 "Pencegahan Stunting", "Kualitas Layanan RS",
                 "Jaminan Harga Bahan Pokok", "PANADA", "UEP Graduasi",
                 "Revitalisasi Rutilahu", "Pelatihan UMKM", "Makan Bergizi Gratis",
+                "Tim Gaspoll / Command Center", "Super Apps / SPBE", "Budaya Kerja Birokrasi", "Bantuan Keuangan Pemerintah Desa",
                 "Akses Listrik", "Internet Desa",
             ];
 
