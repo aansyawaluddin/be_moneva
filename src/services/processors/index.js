@@ -17,6 +17,14 @@ import rsRujukanProcessor from './berani_sehat/rsRujukanProcessor.js';
 import stuntingProcessor from './berani_sehat/stuntingProcessor.js';
 import kualitasRsProcessor from './berani_sehat/kualitasRsProcessor.js';
 
+// Berani Sejahtera
+import jaminanHargaProcessor from './berani_sejahtera/jaminanHargaProcessor.js';
+import panadaProcessor from './berani_sejahtera/panadaProcessor.js';
+import uepProcessor from './berani_sejahtera/uepProcessor.js';
+import rutilahuProcessor from './berani_sejahtera/rutilahuProcessor.js';
+import umkmProcessor from './berani_sejahtera/umkmProcessor.js';
+import mbgProcessor from './berani_sejahtera/mbgProcessor.js';
+
 // Berani Menyala
 import aksesListrikProcessor from './berani_menyala/aksesListrikProcessor.js';
 import internetDesaProcessor from './berani_menyala/internetDesaProcessor.js';
@@ -40,6 +48,13 @@ const processorRegistry = {
     'rs-rujukan': rsRujukanProcessor,
     'stunting': stuntingProcessor,
     'kualitas-rs': kualitasRsProcessor,
+    // Berani Sejahtera
+    'jaminan-harga': jaminanHargaProcessor,
+    'panada': panadaProcessor,
+    'uep': uepProcessor,
+    'rutilahu': rutilahuProcessor,
+    'umkm': umkmProcessor,
+    'mbg': mbgProcessor,
     // Berani Menyala
     'akses-listrik': aksesListrikProcessor,
     'internet-desa': internetDesaProcessor,
@@ -88,6 +103,20 @@ export const getProcessor = (subProgramName) => {
         foundKey = 'stunting';
     } else if (nameLower.includes('kualitas layanan') || (nameLower.includes('undata') && nameLower.includes('madani') && !nameLower.includes('rujukan'))) {
         foundKey = 'kualitas-rs';
+
+        // ===== BERANI SEJAHTERA =====
+    } else if (nameLower.includes('jaminan') || nameLower.includes('bahan pokok')) {
+        foundKey = 'jaminan-harga';
+    } else if (nameLower.includes('panada') || nameLower.includes('pangan daerah')) {
+        foundKey = 'panada';
+    } else if (nameLower.includes('uep') || nameLower.includes('usaha ekonomi produktif') || nameLower.includes('graduasi')) {
+        foundKey = 'uep';
+    } else if (nameLower.includes('rutilahu')) {
+        foundKey = 'rutilahu';
+    } else if (nameLower.includes('umkm') || nameLower.includes('kewirausahaan')) {
+        foundKey = 'umkm';
+    } else if (nameLower.includes('mbg') || nameLower.includes('makan bergizi')) {
+        foundKey = 'mbg';
 
         // ===== BERANI MENYALA =====
     } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {

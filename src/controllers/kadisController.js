@@ -17,6 +17,8 @@ const INCLUDE_ALL = {
     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
     detailPemeriksaanGratis: true, detailNasehaKami: true,
     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
+    detailJaminanHarga: true, detailPanada: true, detailUep: true,
+    detailRutilahu: true, detailUmkm: true, detailMbg: true,
     detailAksesListrik: true, detailInternetDesa: true,
 };
 
@@ -34,8 +36,10 @@ const hitungFisikDanUang = (upload) => {
     if (upload.detailCareer?.length) upload.detailCareer.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     if (upload.detailIplm?.length) upload.detailIplm.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; });
     const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
+    const sejahteraArrays = [upload.detailJaminanHarga, upload.detailPanada, upload.detailUep, upload.detailRutilahu, upload.detailUmkm, upload.detailMbg];
     const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
     sehatArrays.forEach(arr => { jumlahFisik += arr?.length || 0; });
+    sejahteraArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
     menyalaArrays.forEach(arr => { arr?.forEach(item => { jumlahFisik += Number(item.realisasiKinerja) || 0; }); });
 
     const totalUang =
@@ -50,6 +54,9 @@ const hitungFisikDanUang = (upload) => {
         sumRealisasiAnggaran(upload.detailPemeriksaanGratis) + sumRealisasiAnggaran(upload.detailNasehaKami) +
         sumRealisasiAnggaran(upload.detailRsRujukan) + sumRealisasiAnggaran(upload.detailStunting) +
         sumRealisasiAnggaran(upload.detailKualitasRs) +
+        sumRealisasiAnggaran(upload.detailJaminanHarga) + sumRealisasiAnggaran(upload.detailPanada) +
+        sumRealisasiAnggaran(upload.detailUep) + sumRealisasiAnggaran(upload.detailRutilahu) +
+        sumRealisasiAnggaran(upload.detailUmkm) + sumRealisasiAnggaran(upload.detailMbg) +
         sumRealisasiAnggaran(upload.detailAksesListrik) + sumRealisasiAnggaran(upload.detailInternetDesa);
 
     return { jumlahFisik, totalUang };
@@ -127,7 +134,16 @@ const kadisController = {
             if (role === 'Kepala Dinas' && headerData.subProgram.programKerjaId !== programKerjaId) return res.status(403).json({ msg: "Akses Ditolak: Laporan ini bukan dari Program Kerja Anda." });
             if (headerData.statusVerifikasi === 'Ditolak') return res.status(400).json({ msg: "Laporan ini sudah ditolak sebelumnya." });
             await prisma.$transaction(async (tx) => {
-                const models = ['realisasiBosda', 'realisasiSpp', 'realisasiBeasiswaCerdas', 'realisasiBeasiswaMiskin', 'realisasiPrakerin', 'realisasiDigital', 'realisasiVokasi', 'realisasiCareerCenter', 'realisasiIplm', 'realisasiSeragam', 'realisasiBeasiswa', 'realisasiPemeriksaanGratis', 'realisasiNasehaKami', 'realisasiRsRujukan', 'realisasiStunting', 'realisasiKualitasRs', 'realisasiAksesListrik', 'realisasiInternetDesa'];
+                const models = [
+                    'realisasiBosda', 'realisasiSpp', 'realisasiBeasiswaCerdas', 'realisasiBeasiswaMiskin',
+                    'realisasiPrakerin', 'realisasiDigital', 'realisasiVokasi', 'realisasiCareerCenter',
+                    'realisasiIplm', 'realisasiSeragam', 'realisasiBeasiswa',
+                    'realisasiPemeriksaanGratis', 'realisasiNasehaKami', 'realisasiRsRujukan',
+                    'realisasiStunting', 'realisasiKualitasRs',
+                    'realisasiJaminanHarga', 'realisasiPanada', 'realisasiUep',
+                    'realisasiRutilahu', 'realisasiUmkm', 'realisasiMbg',
+                    'realisasiAksesListrik', 'realisasiInternetDesa',
+                ];
                 for (const model of models) { await tx[model].deleteMany({ where: { dataRealisasiId: Number(id) } }); }
                 await tx.dataRealisasi.update({ where: { id: Number(id) }, data: { statusVerifikasi: 'Ditolak', catatanRevisi: catatan, diVerifikasiOleh: req.user.id, tanggalVerifikasi: null } });
             });
@@ -163,6 +179,12 @@ const kadisController = {
             else if (headerData.detailRsRujukan?.length > 0) { detailItems = headerData.detailRsRujukan.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "RS Rujukan Internasional"; }
             else if (headerData.detailStunting?.length > 0) { detailItems = headerData.detailStunting.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Pencegahan Stunting"; }
             else if (headerData.detailKualitasRs?.length > 0) { detailItems = headerData.detailKualitasRs.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Kualitas Layanan RS"; }
+            else if (headerData.detailJaminanHarga?.length > 0) { detailItems = headerData.detailJaminanHarga.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Jaminan Harga Bahan Pokok"; }
+            else if (headerData.detailPanada?.length > 0) { detailItems = headerData.detailPanada.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "PANADA"; }
+            else if (headerData.detailUep?.length > 0) { detailItems = headerData.detailUep.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "UEP Graduasi"; }
+            else if (headerData.detailRutilahu?.length > 0) { detailItems = headerData.detailRutilahu.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Revitalisasi Rutilahu"; }
+            else if (headerData.detailUmkm?.length > 0) { detailItems = headerData.detailUmkm.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Pelatihan UMKM"; }
+            else if (headerData.detailMbg?.length > 0) { detailItems = headerData.detailMbg.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Makan Bergizi Gratis"; }
             else if (headerData.detailAksesListrik?.length > 0) { detailItems = headerData.detailAksesListrik.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Akses Listrik"; }
             else if (headerData.detailInternetDesa?.length > 0) { detailItems = headerData.detailInternetDesa.map(item => ({ ...item, nominal: parseNom(item.realisasiAnggaran) })); tipeLaporan = "Internet Desa"; }
 
@@ -180,10 +202,16 @@ const kadisController = {
                 else if (slug.includes('iplm') || slug.includes('literasi')) tipeLaporan = "IPLM";
                 else if (slug.includes('seragam')) tipeLaporan = "Seragam";
                 else if (slug.includes('pemeriksaan') || slug.includes('gratis')) tipeLaporan = "Pemeriksaan Kesehatan Gratis";
-                else if (slug.includes('naseha') || slug.includes('jaminan')) tipeLaporan = "Naseha Kami";
+                else if (slug.includes('naseha') || slug.includes('jaminan-layanan')) tipeLaporan = "Naseha Kami";
                 else if (slug.includes('rujukan') || slug.includes('internasional')) tipeLaporan = "RS Rujukan Internasional";
                 else if (slug.includes('stunting')) tipeLaporan = "Pencegahan Stunting";
                 else if (slug.includes('kualitas') || slug.includes('undata') || slug.includes('madani')) tipeLaporan = "Kualitas Layanan RS";
+                else if (slug.includes('jaminan') || slug.includes('bahan-pokok')) tipeLaporan = "Jaminan Harga Bahan Pokok";
+                else if (slug.includes('panada') || slug.includes('pangan-daerah')) tipeLaporan = "PANADA";
+                else if (slug.includes('uep') || slug.includes('graduasi')) tipeLaporan = "UEP Graduasi";
+                else if (slug.includes('rutilahu')) tipeLaporan = "Revitalisasi Rutilahu";
+                else if (slug.includes('umkm') || slug.includes('kewirausahaan')) tipeLaporan = "Pelatihan UMKM";
+                else if (slug.includes('mbg') || slug.includes('makan-bergizi')) tipeLaporan = "Makan Bergizi Gratis";
                 else if (slug.includes('listrik') || slug.includes('penerangan') || slug.includes('lampu')) tipeLaporan = "Akses Listrik";
                 else if (slug.includes('internet') || slug.includes('blank') || slug.includes('jaringan')) tipeLaporan = "Internet Desa";
                 else tipeLaporan = "Umum";
@@ -226,6 +254,12 @@ const kadisController = {
                 else if (header.detailRsRujukan?.length) { header.detailRsRujukan.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
                 else if (header.detailStunting?.length) { header.detailStunting.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
                 else if (header.detailKualitasRs?.length) { header.detailKualitasRs.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailJaminanHarga?.length) { header.detailJaminanHarga.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailPanada?.length) { header.detailPanada.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailUep?.length) { header.detailUep.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailRutilahu?.length) { header.detailRutilahu.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailUmkm?.length) { header.detailUmkm.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
+                else if (header.detailMbg?.length) { header.detailMbg.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
                 else if (header.detailAksesListrik?.length) { header.detailAksesListrik.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
                 else if (header.detailInternetDesa?.length) { header.detailInternetDesa.forEach(item => { totalFisik += Number(item.realisasiKinerja) || 0; itemsList.push({ ...item, nominal: parseNom(item.realisasiAnggaran) }); }); }
             });

@@ -20,11 +20,24 @@ const monitoringWilayahController = {
                     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
                     detailPemeriksaanGratis: true, detailNasehaKami: true,
                     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
+                    detailJaminanHarga: true, detailPanada: true, detailUep: true,
+                    detailRutilahu: true, detailUmkm: true, detailMbg: true,
                     detailAksesListrik: true, detailInternetDesa: true,
                 }
             });
 
-            const cleanName = (name) => { if (!name) return 'LAINNYA'; let c = name.toString().trim().toUpperCase().replace(/^KAB\.\s*/, '').replace(/^KABUPATEN\s*/, '').replace(/^KOTA\s*/, '').trim(); if (c === 'TOUNA' || c === 'TOJO UNA-UNA' || c === 'TOJO UNAUNA') c = 'TOJO UNA UNA'; if (c === 'TOLITOLI' || c === 'TOLI-TOLI') c = 'TOLI TOLI'; if (c === 'BANGGAI KEPUALUAN') c = 'BANGGAI KEPULAUAN'; return c; };
+            const cleanName = (name) => {
+                if (!name) return 'LAINNYA';
+                // Ambil bagian pertama sebelum koma (misal: "Kota Palu, Kecamatan Tatanga" → "Kota Palu")
+                let c = name.toString().split(',')[0].trim().toUpperCase();
+                c = c.replace(/^KAB\.\s*/, '').replace(/^KABUPATEN\s*/, '').replace(/^KOTA\s*/, '').trim();
+                if (c === 'TOUNA' || c === 'TOJO UNA-UNA' || c === 'TOJO UNAUNA') c = 'TOJO UNA UNA';
+                if (c === 'TOLITOLI' || c === 'TOLI-TOLI') c = 'TOLI TOLI';
+                if (c === 'BANGGAI KEPUALUAN') c = 'BANGGAI KEPULAUAN';
+                // Normalisasi alias umum
+                if (c === 'PARIGI' || c === 'PARIMO') c = 'PARIGI MOUTONG';
+                return c;
+            };
             const DISPLAY_WILAYAH = { "BANGGAI": "Kabupaten Banggai", "BANGGAI KEPULAUAN": "Kabupaten Banggai Kepulauan", "BANGGAI LAUT": "Kabupaten Banggai Laut", "BUOL": "Kabupaten Buol", "DONGGALA": "Kabupaten Donggala", "MOROWALI": "Kabupaten Morowali", "MOROWALI UTARA": "Kabupaten Morowali Utara", "PARIGI MOUTONG": "Kabupaten Parigi Moutong", "POSO": "Kabupaten Poso", "SIGI": "Kabupaten Sigi", "TOJO UNA UNA": "Kabupaten Tojo Una Una", "TOLI TOLI": "Kabupaten Toli Toli", "PALU": "Kota Palu", "LAINNYA": "Lainnya" };
             const mapWilayah = {};
             Object.keys(DISPLAY_WILAYAH).filter(k => k !== "LAINNYA").forEach(w => { mapWilayah[w] = { namaKabupaten: w, totalPenerima: 0, totalRealisasi: 0, programs: {} }; });
@@ -33,7 +46,6 @@ const monitoringWilayahController = {
                 const namaKota = cleanName(kabupaten); const uang = Number(nominal) || 0; const penerima = Number(jumlahPenerima) || 0;
                 rekapProvinsi.totalPenerima += penerima; rekapProvinsi.totalRealisasi += uang;
                 if (rekapProvinsi.programs[namaProgram]) { rekapProvinsi.programs[namaProgram].totalPenerima += penerima; rekapProvinsi.programs[namaProgram].totalRealisasi += uang; }
-                // Kalau tidak dikenal (gabungan, dsb) → masuk ke LAINNYA
                 const targetKota = mapWilayah[namaKota] ? namaKota : 'LAINNYA';
                 if (!mapWilayah[targetKota]) mapWilayah[targetKota] = { namaKabupaten: targetKota, totalPenerima: 0, totalRealisasi: 0, programs: {} };
                 mapWilayah[targetKota].totalPenerima += penerima; mapWilayah[targetKota].totalRealisasi += uang;
@@ -61,13 +73,20 @@ const monitoringWilayahController = {
                 header.detailIplm?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 processDetailArray(header.detailSeragam, 'kabupatenKota');
                 processDetailArray(header.detailBeasiswa, 'kabupaten');
-                // Berani Sehat: realisasiKinerja bisa desimal (%) → pakai 1 per baris sebagai penerima
+                // Berani Sehat
                 header.detailPemeriksaanGratis?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 header.detailNasehaKami?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 header.detailRsRujukan?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 header.detailStunting?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 header.detailKualitasRs?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
-                // Berani Menyala - per kabupaten
+                // Berani Sejahtera
+                header.detailJaminanHarga?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailPanada?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailUep?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailRutilahu?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailUmkm?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailMbg?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Menyala
                 header.detailAksesListrik?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailInternetDesa?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
             });
@@ -80,17 +99,16 @@ const monitoringWilayahController = {
             const dataProvinsi = { namaKabupaten: "SULAWESI TENGAH (TOTAL PROVINSI)", totalPenerima: rekapProvinsi.totalPenerima, totalRealisasi: formatRupiah(rekapProvinsi.totalRealisasi), persentaseTotal: persenProvD, persentaseTotalString: `${persenProvD.toString().replace('.', ',')}%`, detailProgram: buildProgramList(rekapProvinsi.programs) };
 
             let finalData = Object.keys(mapWilayah).map(rawName => { const kota = mapWilayah[rawName]; const persen = totalAnggaranProvinsi > 0 ? (kota.totalRealisasi / totalAnggaranProvinsi) * 100 : 0; const persenD = Number(persen.toFixed(3)); return { namaKabupaten: DISPLAY_WILAYAH[rawName] || rawName, totalPenerima: kota.totalPenerima, totalRealisasi: formatRupiah(kota.totalRealisasi), persentaseTotal: persenD, persentaseTotalString: `${persenD.toString().replace('.', ',')}%`, detailProgram: buildProgramList(kota.programs) }; });
-            // Wilayah resmi selalu di atas, Lainnya paling bawah
             const URUTAN_RESMI = Object.values(DISPLAY_WILAYAH).filter(v => v !== 'Lainnya');
             finalData.sort((a, b) => {
                 const idxA = URUTAN_RESMI.indexOf(a.namaKabupaten);
                 const idxB = URUTAN_RESMI.indexOf(b.namaKabupaten);
                 const isLainnyaA = idxA === -1;
                 const isLainnyaB = idxB === -1;
-                if (!isLainnyaA && !isLainnyaB) return idxA - idxB; // keduanya resmi → urut sesuai URUTAN_RESMI
-                if (!isLainnyaA) return -1; // A resmi, B tidak → A duluan
-                if (!isLainnyaB) return 1;  // B resmi, A tidak → B duluan
-                return a.namaKabupaten.localeCompare(b.namaKabupaten); // keduanya tidak resmi → alfabet
+                if (!isLainnyaA && !isLainnyaB) return idxA - idxB;
+                if (!isLainnyaA) return -1;
+                if (!isLainnyaB) return 1;
+                return a.namaKabupaten.localeCompare(b.namaKabupaten);
             });
             finalData.unshift(dataProvinsi);
 

@@ -12,6 +12,8 @@ const INCLUDE_ALL = {
     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
     detailPemeriksaanGratis: true, detailNasehaKami: true,
     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
+    detailJaminanHarga: true, detailPanada: true, detailUep: true,
+    detailRutilahu: true, detailUmkm: true, detailMbg: true,
     detailAksesListrik: true, detailInternetDesa: true,
 };
 
@@ -104,10 +106,23 @@ const staffController = {
             else if (headerData.detailRsRujukan?.length > 0) { detailItems = headerData.detailRsRujukan; tipeLaporan = "RS Rujukan Internasional"; }
             else if (headerData.detailStunting?.length > 0) { detailItems = headerData.detailStunting; tipeLaporan = "Pencegahan Stunting"; }
             else if (headerData.detailKualitasRs?.length > 0) { detailItems = headerData.detailKualitasRs; tipeLaporan = "Kualitas Layanan RS"; }
+            else if (headerData.detailJaminanHarga?.length > 0) { detailItems = headerData.detailJaminanHarga; tipeLaporan = "Jaminan Harga Bahan Pokok"; }
+            else if (headerData.detailPanada?.length > 0) { detailItems = headerData.detailPanada; tipeLaporan = "PANADA"; }
+            else if (headerData.detailUep?.length > 0) { detailItems = headerData.detailUep; tipeLaporan = "UEP Graduasi"; }
+            else if (headerData.detailRutilahu?.length > 0) { detailItems = headerData.detailRutilahu; tipeLaporan = "Revitalisasi Rutilahu"; }
+            else if (headerData.detailUmkm?.length > 0) { detailItems = headerData.detailUmkm; tipeLaporan = "Pelatihan UMKM"; }
+            else if (headerData.detailMbg?.length > 0) { detailItems = headerData.detailMbg; tipeLaporan = "Makan Bergizi Gratis"; }
             else if (headerData.detailAksesListrik?.length > 0) { detailItems = headerData.detailAksesListrik; tipeLaporan = "Akses Listrik"; }
             else if (headerData.detailInternetDesa?.length > 0) { detailItems = headerData.detailInternetDesa; tipeLaporan = "Internet Desa"; }
 
-            const ANGGARAN_TYPES = ["Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM", "Pemeriksaan Kesehatan Gratis", "Naseha Kami", "RS Rujukan Internasional", "Pencegahan Stunting", "Kualitas Layanan RS", "Akses Listrik", "Internet Desa"];
+            const ANGGARAN_TYPES = [
+                "Beasiswa Miskin/Berprestasi", "Vokasi", "Career Center", "IPLM",
+                "Pemeriksaan Kesehatan Gratis", "Naseha Kami", "RS Rujukan Internasional",
+                "Pencegahan Stunting", "Kualitas Layanan RS",
+                "Jaminan Harga Bahan Pokok", "PANADA", "UEP Graduasi",
+                "Revitalisasi Rutilahu", "Pelatihan UMKM", "Makan Bergizi Gratis",
+                "Akses Listrik", "Internet Desa",
+            ];
 
             detailItems = detailItems.map(item => {
                 let f = { ...item };
