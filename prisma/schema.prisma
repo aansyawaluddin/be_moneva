@@ -78,12 +78,12 @@ model SubProgramKerja {
 }
 
 model SubProgramTarget {
-  id           Int     @id @default(autoincrement())
-  subProgramId Int     @map("sub_program_id")
+  id           Int      @id @default(autoincrement())
+  subProgramId Int      @map("sub_program_id")
   tahun        Int
-  target       Int
+  target       Decimal  @db.Decimal(20, 5)
   anggaran     BigInt
-  keterangan   String? @db.Text
+  keterangan   String?  @db.Text
 
   subProgram SubProgramKerja @relation(fields: [subProgramId], references: [id])
 
@@ -115,7 +115,7 @@ model CapaianIndikator9 {
   id           Int      @id @default(autoincrement())
   indikatorId  Int      @map("indikator_id")
   tahun        Int      @map("tahun")
-  nilaiCapaian Decimal? @map("nilai_capaian") @db.Decimal(15, 4)
+  nilaiCapaian Decimal? @map("nilai_capaian") @db.Decimal(20, 5)
   diInputOleh  Int?     @map("di_input_oleh")
   tanggalInput DateTime @default(now()) @map("tanggal_input")
 
@@ -168,16 +168,23 @@ model DataRealisasi {
   detailKualitasRs        RealisasiKualitasRs[]
   detailJaminanHarga      RealisasiJaminanHarga[]
   detailPanada            RealisasiPanada[]
-  detailUep               RealisasiUep[]
-  detailRutilahu          RealisasiRutilahu[]
-  detailUmkm              RealisasiUmkm[]
-  detailMbg               RealisasiMbg[]
-  detailGaspoll           RealisasiGaspoll[]
-  detailSpbe              RealisasiSpbe[]
-  detailBudayaKerja       RealisasiBudayaKerja[]
-  detailBantuanKeuangan   RealisasiBantuanKeuangan[]
-  detailAksesListrik      RealisasiAksesListrik[]
-  detailInternetDesa      RealisasiInternetDesa[]
+  detailUep                RealisasiUep[]
+  detailRutilahu           RealisasiRutilahu[]
+  detailUmkm               RealisasiUmkm[]
+  detailMbg                RealisasiMbg[]
+  detailAirBersih          RealisasiAirBersih[]
+  detailDrainase           RealisasiDrainase[]
+  detailMyc                RealisasiMyc[]
+  detailAgropolitan        RealisasiAgropolitan[]
+  detailJalanDesa          RealisasiJalanDesa[]
+  detailKonektivitasBanggai RealisasiKonektivitasBanggai[]
+  detailKonektivitasTambu  RealisasiKonektivitasTambu[]
+  detailGaspoll            RealisasiGaspoll[]
+  detailSpbe               RealisasiSpbe[]
+  detailBudayaKerja        RealisasiBudayaKerja[]
+  detailBantuanKeuangan    RealisasiBantuanKeuangan[]
+  detailAksesListrik       RealisasiAksesListrik[]
+  detailInternetDesa       RealisasiInternetDesa[]
 
   @@index([diInputOleh])
   @@index([diVerifikasiOleh])
@@ -202,7 +209,7 @@ model RealisasiBosda {
   smk             Int      @default(0) @map("smk")
   slbNegeri       Int      @default(0) @map("slb_negeri")
   slbSwasta       Int      @default(0) @map("slb_swasta")
-  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -215,12 +222,12 @@ model RealisasiSpp {
   dataRealisasiId Int      @map("data_realisasi_id")
   kabupatenKota   String?  @map("kabupaten_kota")
   siswaSma        Int      @default(0) @map("siswa_sma")
-  realisasiSma    Decimal? @map("realisasi_sma") @db.Decimal(15, 2)
+  realisasiSma    Decimal? @map("realisasi_sma") @db.Decimal(20, 5)
   siswaSmk        Int      @default(0) @map("siswa_smk")
-  realisasiSmk    Decimal? @map("realisasi_smk") @db.Decimal(15, 2)
+  realisasiSmk    Decimal? @map("realisasi_smk") @db.Decimal(20, 5)
   siswaSlb        Int      @default(0) @map("siswa_slb")
-  realisasiSlb    Decimal? @map("realisasi_slb") @db.Decimal(15, 2)
-  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+  realisasiSlb    Decimal? @map("realisasi_slb") @db.Decimal(20, 5)
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -234,8 +241,8 @@ model RealisasiBeasiswaCerdas {
   bidang          String   @map("bidang") @db.Text
   jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
   totalPagu       BigInt   @default(0) @map("total_pagu")
-  realisasi       Decimal? @map("realisasi") @db.Decimal(15, 2)
-  sisa            Decimal? @map("sisa") @db.Decimal(15, 2)
+  realisasi       Decimal? @map("realisasi") @db.Decimal(20, 5)
+  sisa            Decimal? @map("sisa") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -248,9 +255,9 @@ model RealisasiPrakerin {
   dataRealisasiId Int      @map("data_realisasi_id")
   kabupatenKota   String   @map("kabupaten_kota")
   smkNegeri       Int      @default(0) @map("smk_negeri")
-  realisasiNegeri Decimal? @map("realisasi_negeri") @db.Decimal(15, 2)
+  realisasiNegeri Decimal? @map("realisasi_negeri") @db.Decimal(20, 5)
   smkSwasta       Int      @default(0) @map("smk_swasta")
-  realisasiSwasta Decimal? @map("realisasi_swasta") @db.Decimal(15, 2)
+  realisasiSwasta Decimal? @map("realisasi_swasta") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -268,7 +275,7 @@ model RealisasiBeasiswa {
   kabupaten       String?  @db.Text
   institusiTujuan String?  @map("institusi_tujuan")
   jalur           String?  @map("jalur")
-  nominal         Decimal? @db.Decimal(15, 2)
+  nominal         Decimal? @db.Decimal(20, 5)
   kontakPenerima  String?  @map("kontak_penerima")
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
@@ -285,7 +292,7 @@ model RealisasiBeasiswaMiskin {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -302,8 +309,8 @@ model RealisasiDigital {
   jumlahSekolah   Int      @default(0) @map("jumlah_sekolah")
   jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
   totalPagu       BigInt   @default(0) @map("total_pagu")
-  realisasi       Decimal? @map("realisasi") @db.Decimal(15, 2)
-  sisa            Decimal? @map("sisa") @db.Decimal(15, 2)
+  realisasi       Decimal? @map("realisasi") @db.Decimal(20, 5)
+  sisa            Decimal? @map("sisa") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -320,7 +327,7 @@ model RealisasiVokasi {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -339,7 +346,7 @@ model RealisasiCareerCenter {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -357,7 +364,7 @@ model RealisasiIplm {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -373,7 +380,7 @@ model RealisasiSeragam {
   namaSekolah     String   @map("nama_sekolah")
   jumlahSiswa     Int      @default(0) @map("jumlah_siswa")
   kabupatenKota   String?  @map("kabupaten_kota")
-  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(15, 2)
+  nominal         Decimal? @map("nominal_bantuan") @db.Decimal(20, 5)
 
   header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
 
@@ -388,10 +395,10 @@ model RealisasiPemeriksaanGratis {
   rincianKegiatan   String   @map("rincian_kegiatan") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota")
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -406,10 +413,10 @@ model RealisasiNasehaKami {
   dataRealisasiId   Int      @map("data_realisasi_id")
   rincianKegiatan   String   @map("rincian_kegiatan") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -424,10 +431,10 @@ model RealisasiRsRujukan {
   dataRealisasiId   Int      @map("data_realisasi_id")
   rincianKegiatan   String   @map("rincian_kegiatan") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -443,10 +450,10 @@ model RealisasiStunting {
   program           String   @map("program") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota")
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -461,10 +468,10 @@ model RealisasiKualitasRs {
   dataRealisasiId   Int      @map("data_realisasi_id")
   rincianKegiatan   String   @map("rincian_kegiatan") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -482,10 +489,10 @@ model RealisasiJaminanHarga {
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -500,10 +507,10 @@ model RealisasiPanada {
   dataRealisasiId   Int      @map("data_realisasi_id")
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -518,10 +525,10 @@ model RealisasiUep {
   dataRealisasiId   Int      @map("data_realisasi_id")
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -537,10 +544,10 @@ model RealisasiRutilahu {
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -556,10 +563,10 @@ model RealisasiUmkm {
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -574,10 +581,10 @@ model RealisasiMbg {
   dataRealisasiId   Int      @map("data_realisasi_id")
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -586,6 +593,132 @@ model RealisasiMbg {
   @@index([dataRealisasiId])
   @@map("realisasi_mbg")
 }
+
+// BERANI LANCAR
+
+model RealisasiAirBersih {
+  id                  Int      @id @default(autoincrement())
+  dataRealisasiId     Int      @map("data_realisasi_id")
+  uraian              String   @map("uraian") @db.Text
+  kabupatenKota       String?  @map("kabupaten_kota") @db.Text
+  satuan              String?  @map("satuan")
+  targetKinerja       Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran      BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja    Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiPersenKinerja String? @map("realisasi_persen_kinerja")
+  realisasiAnggaran   Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_air_bersih")
+}
+
+model RealisasiDrainase {
+  id                  Int      @id @default(autoincrement())
+  dataRealisasiId     Int      @map("data_realisasi_id")
+  uraian              String   @map("uraian") @db.Text
+  kabupatenKota       String?  @map("kabupaten_kota") @db.Text
+  satuan              String?  @map("satuan")
+  targetKinerja       Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran      BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja    Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiPersenKinerja String? @map("realisasi_persen_kinerja")
+  realisasiAnggaran   Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_drainase")
+}
+
+model RealisasiMyc {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  sasaranProgram    String   @map("sasaran_program") @db.Text
+  kabupatenKota     String?  @map("kabupaten_kota") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_myc")
+}
+
+model RealisasiAgropolitan {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+  capaianKinerja    String?  @map("capaian_kinerja")
+  capaianAnggaran   String?  @map("capaian_anggaran")
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_agropolitan")
+}
+
+model RealisasiJalanDesa {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  perangkatDaerah   String   @map("perangkat_daerah") @db.Text
+  sasaranProgram    String?  @map("sasaran_program") @db.Text
+  kabupatenKota     String?  @map("kabupaten_kota") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_jalan_desa")
+}
+
+model RealisasiKonektivitasBanggai {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  sasaranProgram    String   @map("sasaran_program") @db.Text
+  kabupatenKota     String?  @map("kabupaten_kota") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_konektivitas_banggai")
+}
+
+model RealisasiKonektivitasTambu {
+  id                Int      @id @default(autoincrement())
+  dataRealisasiId   Int      @map("data_realisasi_id")
+  sasaranProgram    String   @map("sasaran_program") @db.Text
+  kabupatenKota     String?  @map("kabupaten_kota") @db.Text
+  satuan            String?  @map("satuan")
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
+  targetAnggaran    BigInt   @default(0) @map("target_anggaran")
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
+
+  header DataRealisasi @relation(fields: [dataRealisasiId], references: [id], onDelete: Cascade)
+
+  @@index([dataRealisasiId])
+  @@map("realisasi_konektivitas_tambu")
+}
+
 
 
 // Berani Menyala
@@ -598,7 +731,7 @@ model RealisasiAksesListrik {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -617,7 +750,7 @@ model RealisasiInternetDesa {
   targetKinerja     Int      @default(0) @map("target_kinerja")
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
   realisasiKinerja  Int      @default(0) @map("realisasi_kinerja")
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -634,10 +767,10 @@ model RealisasiGaspoll {
   dataRealisasiId   Int      @map("data_realisasi_id")
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -652,10 +785,10 @@ model RealisasiSpbe {
   dataRealisasiId   Int      @map("data_realisasi_id")
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -671,10 +804,10 @@ model RealisasiBudayaKerja {
   perangkatDaerah   String   @map("perangkat_daerah") @db.Text
   rincianKegiatan   String?  @map("rincian_kegiatan") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -691,10 +824,10 @@ model RealisasiBantuanKeuangan {
   rincianKegiatan   String?  @map("rincian_kegiatan") @db.Text
   kabupatenKota     String?  @map("kabupaten_kota") @db.Text
   satuan            String?  @map("satuan")
-  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(15, 2)
+  targetKinerja     Decimal? @map("target_kinerja") @db.Decimal(20, 5)
   targetAnggaran    BigInt   @default(0) @map("target_anggaran")
-  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(15, 2)
-  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(15, 2)
+  realisasiKinerja  Decimal? @map("realisasi_kinerja") @db.Decimal(20, 5)
+  realisasiAnggaran Decimal? @map("realisasi_anggaran") @db.Decimal(20, 5)
   capaianKinerja    String?  @map("capaian_kinerja")
   capaianAnggaran   String?  @map("capaian_anggaran")
 
@@ -703,4 +836,3 @@ model RealisasiBantuanKeuangan {
   @@index([dataRealisasiId])
   @@map("realisasi_bantuan_keuangan")
 }
-

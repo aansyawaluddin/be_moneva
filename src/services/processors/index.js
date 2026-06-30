@@ -25,6 +25,15 @@ import rutilahuProcessor from './berani_sejahtera/rutilahuProcessor.js';
 import umkmProcessor from './berani_sejahtera/umkmProcessor.js';
 import mbgProcessor from './berani_sejahtera/mbgProcessor.js';
 
+// Berani Lancar
+import airBersihProcessor from './berani_lancar/airBersihProcessor.js';
+import drainaseProcessor from './berani_lancar/drainaseProcessor.js';
+import mycProcessor from './berani_lancar/mycProcessor.js';
+import agropolitanProcessor from './berani_lancar/agropolitanProcessor.js';
+import jalanDesaProcessor from './berani_lancar/jalanDesaProcessor.js';
+import konektivitasBanggaiProcessor from './berani_lancar/konektivitasBanggaiProcessor.js';
+import konektivitasTambuProcessor from './berani_lancar/konektivitasTambuProcessor.js';
+
 // Berani Integritas
 import gaspollProcessor from './berani_integritas/gaspollProcessor.js';
 import spbeProcessor from './berani_integritas/spbeProcessor.js';
@@ -61,6 +70,14 @@ const processorRegistry = {
     'rutilahu': rutilahuProcessor,
     'umkm': umkmProcessor,
     'mbg': mbgProcessor,
+    // Berani Lancar
+    'air-bersih': airBersihProcessor,
+    'drainase': drainaseProcessor,
+    'myc': mycProcessor,
+    'agropolitan': agropolitanProcessor,
+    'jalan-desa': jalanDesaProcessor,
+    'konektivitas-banggai': konektivitasBanggaiProcessor,
+    'konektivitas-tambu': konektivitasTambuProcessor,
     // Berani Integritas
     'gaspoll': gaspollProcessor,
     'spbe': spbeProcessor,
@@ -103,7 +120,7 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('beasiswa')) {
         foundKey = 'beasiswa';
 
-    // ===== BERANI SEHAT =====
+        // ===== BERANI SEHAT =====
     } else if (nameLower.includes('pemeriksaan kesehatan gratis') || nameLower.includes('dukungan terhadap pelaksanaan')) {
         foundKey = 'pemeriksaan-gratis';
     } else if (nameLower.includes('naseha') || nameLower.includes('jaminan layanan kesehatan')) {
@@ -115,7 +132,7 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('kualitas layanan') || (nameLower.includes('undata') && nameLower.includes('madani') && !nameLower.includes('rujukan'))) {
         foundKey = 'kualitas-rs';
 
-    // ===== BERANI SEJAHTERA =====
+        // ===== BERANI SEJAHTERA =====
     } else if (nameLower.includes('bahan pokok') || (nameLower.includes('jaminan') && nameLower.includes('harga'))) {
         foundKey = 'jaminan-harga';
     } else if (nameLower.includes('panada') || nameLower.includes('pangan daerah')) {
@@ -129,7 +146,23 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('mbg') || nameLower.includes('makan bergizi')) {
         foundKey = 'mbg';
 
-    // ===== BERANI INTEGRITAS =====
+        // ===== BERANI LANCAR =====
+    } else if (nameLower.includes('air bersih') || (nameLower.includes('jaminan') && nameLower.includes('air'))) {
+        foundKey = 'air-bersih';
+    } else if (nameLower.includes('drainase')) {
+        foundKey = 'drainase';
+    } else if (nameLower.includes('multi year contract') || nameLower.includes('myc')) {
+        foundKey = 'myc';
+    } else if (nameLower.includes('agropolitan') || nameLower.includes('tongkol') || nameLower.includes('cakalang') || nameLower.includes('hilirisasi')) {
+        foundKey = 'agropolitan';
+    } else if (nameLower.includes('1000 kilometer') || nameLower.includes('jalan desa')) {
+        foundKey = 'jalan-desa';
+    } else if (nameLower.includes('banggai kepulauan')) {
+        foundKey = 'konektivitas-banggai';
+    } else if (nameLower.includes('tambu') || nameLower.includes('kasimbar') || nameLower.includes('wilayah barat') || nameLower.includes('wilayah timur')) {
+        foundKey = 'konektivitas-tambu';
+
+        // ===== BERANI INTEGRITAS =====
     } else if (nameLower.includes('gaspoll') || nameLower.includes('command center') || nameLower.includes('call center') || nameLower.includes('siaga laporan')) {
         foundKey = 'gaspoll';
     } else if (nameLower.includes('spbe') || nameLower.includes('super app') || nameLower.includes('super aps') || nameLower.includes('layanan publik terintegrasi')) {
@@ -139,7 +172,7 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('bantuan keuangan') || nameLower.includes('pemerintah desa') || nameLower.includes('pemerintah des')) {
         foundKey = 'bantuan-keuangan';
 
-    // ===== BERANI MENYALA =====
+        // ===== BERANI MENYALA =====
     } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {
         foundKey = 'akses-listrik';
     } else if (nameLower.includes('internet') || nameLower.includes('blank spot') || nameLower.includes('jaringan')) {

@@ -13,6 +13,12 @@ const INCLUDE_SEJAHTERA = {
     detailRutilahu: true, detailUmkm: true, detailMbg: true,
 };
 
+const INCLUDE_LANCAR = {
+    detailAirBersih: true, detailDrainase: true, detailMyc: true,
+    detailAgropolitan: true, detailJalanDesa: true,
+    detailKonektivitasBanggai: true, detailKonektivitasTambu: true,
+};
+
 const INCLUDE_INTEGRITAS = {
     detailGaspoll: true, detailSpbe: true,
     detailBudayaKerja: true, detailBantuanKeuangan: true,
@@ -42,7 +48,7 @@ const monitoringController = {
                                     detailPrakerin: true, detailDigital: true,
                                     detailVokasi: true, detailCareer: true,
                                     detailIplm: true, detailSeragam: true, detailBeasiswa: true,
-                                    ...INCLUDE_SEHAT, ...INCLUDE_SEJAHTERA, ...INCLUDE_INTEGRITAS, ...INCLUDE_MENYALA,
+                                    ...INCLUDE_SEHAT, ...INCLUDE_SEJAHTERA, ...INCLUDE_LANCAR, ...INCLUDE_INTEGRITAS, ...INCLUDE_MENYALA,
                                 }
                             }
                         }
@@ -56,7 +62,7 @@ const monitoringController = {
                 "Tahun": tahun,
                 "Daftar Sub Program": program.subProgram.map(sub => {
                     const targetData = sub.targetTahunan[0];
-                    const targetFisik = targetData?.target ?? 0;
+                    const targetFisik = targetData?.target ? Number(targetData.target) : 0;
                     const paguAnggaran = targetData?.anggaran ? Number(targetData.anggaran) : 0;
                     let totalDisetujuiFisik = 0, totalMenungguFisik = 0, totalUangRealisasi = 0;
 
@@ -76,10 +82,11 @@ const monitoringController = {
 
                         const sehatArrays = [upload.detailPemeriksaanGratis, upload.detailNasehaKami, upload.detailRsRujukan, upload.detailStunting, upload.detailKualitasRs];
                         const sejahteraArrays = [upload.detailJaminanHarga, upload.detailPanada, upload.detailUep, upload.detailRutilahu, upload.detailUmkm, upload.detailMbg];
+                        const lancarArrays = [upload.detailAirBersih, upload.detailDrainase, upload.detailMyc, upload.detailAgropolitan, upload.detailJalanDesa, upload.detailKonektivitasBanggai, upload.detailKonektivitasTambu];
                         const integritasArrays = [upload.detailGaspoll, upload.detailSpbe, upload.detailBudayaKerja, upload.detailBantuanKeuangan];
                         const menyalaArrays = [upload.detailAksesListrik, upload.detailInternetDesa];
                         const hitungAdaptif = (arr) => { arr?.forEach(item => { const rk = item.realisasiKinerja; jumlahFisik += (rk !== null && rk !== undefined) ? Number(rk) || 0 : 1; }); };
-                        [...sehatArrays, ...sejahteraArrays, ...integritasArrays, ...menyalaArrays].forEach(hitungAdaptif);
+                        [...sehatArrays, ...sejahteraArrays, ...lancarArrays, ...integritasArrays, ...menyalaArrays].forEach(hitungAdaptif);
 
                         let uangLaporan = 0;
                         const sumNominal = (items) => { if (!items) return; items.forEach(item => { const n = item.nominal ? Number(item.nominal.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); };
@@ -90,7 +97,7 @@ const monitoringController = {
                         sumRealisasi(upload.detailDigital); sumRealisasi(upload.detailBeasiswaCerdas);
                         sumRealisasiAnggaran(upload.detailBeasiswaMiskin); sumRealisasiAnggaran(upload.detailVokasi); sumRealisasiAnggaran(upload.detailCareer); sumRealisasiAnggaran(upload.detailIplm);
                         if (upload.detailPrakerin?.length > 0) { upload.detailPrakerin.forEach(item => { const n = item.realisasiNegeri ? Number(item.realisasiNegeri.toString()) : 0; const s = item.realisasiSwasta ? Number(item.realisasiSwasta.toString()) : 0; uangLaporan += (isNaN(n) ? 0 : n) + (isNaN(s) ? 0 : s); }); }
-                        [...sehatArrays, ...sejahteraArrays, ...integritasArrays, ...menyalaArrays].forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
+                        [...sehatArrays, ...sejahteraArrays, ...lancarArrays, ...integritasArrays, ...menyalaArrays].forEach(arr => { arr?.forEach(item => { const n = item.realisasiAnggaran ? Number(item.realisasiAnggaran.toString()) : 0; uangLaporan += isNaN(n) ? 0 : n; }); });
 
                         if (upload.statusVerifikasi === 'Disetujui') { totalDisetujuiFisik += jumlahFisik; totalUangRealisasi += uangLaporan; }
                         else if (upload.statusVerifikasi === 'Menunggu') { totalMenungguFisik += jumlahFisik; }
@@ -100,7 +107,7 @@ const monitoringController = {
                     const persentaseKeuangan = paguAnggaran > 0 ? (totalUangRealisasi / paguAnggaran) * 100 : 0;
                     return {
                         id: sub.id, "Nama Sub Program": sub.namaSubProgram,
-                        "Target Fisik": targetFisik, "Realisasi Fisik": totalDisetujuiFisik,
+                        "Target Fisik": Math.round(targetFisik * 100000) / 100000, "Realisasi Fisik": Math.round(totalDisetujuiFisik * 100000) / 100000,
                         "Pending Fisik": totalMenungguFisik,
                         "Capaian Fisik": `${persentaseFisik.toFixed(2)}%`,
                         "Pagu Anggaran": formatRp(paguAnggaran),
@@ -284,6 +291,36 @@ const monitoringController = {
                 const raw = await prisma.realisasiMbg.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
                 data = mapSejahtera(raw);
 
+                // ===== BERANI LANCAR =====
+            } else if (nameLower.includes('air bersih') || (nameLower.includes('jaminan') && nameLower.includes('air'))) {
+                type = "air-bersih";
+                const raw = await prisma.realisasiAirBersih.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Uraian": item.uraian || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi (%) Kinerja": item.realisasiPersenKinerja || '-', "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+            } else if (nameLower.includes('drainase')) {
+                type = "drainase";
+                const raw = await prisma.realisasiDrainase.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Uraian": item.uraian || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi (%) Kinerja": item.realisasiPersenKinerja || '-', "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+            } else if (nameLower.includes('multi year contract') || nameLower.includes('myc')) {
+                type = "myc";
+                const raw = await prisma.realisasiMyc.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Sasaran / Program": item.sasaranProgram || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+            } else if (nameLower.includes('agropolitan') || nameLower.includes('tongkol') || nameLower.includes('cakalang') || nameLower.includes('hilirisasi')) {
+                type = "agropolitan";
+                const raw = await prisma.realisasiAgropolitan.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)), "Capaian Kinerja (%)": item.capaianKinerja || '-', "Capaian Anggaran (%)": item.capaianAnggaran || '-' }; });
+            } else if (nameLower.includes('1000 kilometer') || nameLower.includes('jalan desa')) {
+                type = "jalan-desa";
+                const raw = await prisma.realisasiJalanDesa.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Perangkat Daerah": item.perangkatDaerah || '-', "Sasaran / Program": item.sasaranProgram || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+            } else if (nameLower.includes('banggai kepulauan')) {
+                type = "konektivitas-banggai";
+                const raw = await prisma.realisasiKonektivitasBanggai.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Sasaran / Program": item.sasaranProgram || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+            } else if (nameLower.includes('tambu') || nameLower.includes('kasimbar') || nameLower.includes('wilayah barat') || nameLower.includes('wilayah timur')) {
+                type = "konektivitas-tambu";
+                const raw = await prisma.realisasiKonektivitasTambu.findMany({ where: baseWhere, include: { header: true }, orderBy: { header: { tanggalVerifikasi: 'asc' } } });
+                data = raw.map(item => { hitungAdaptifFisik(item.realisasiKinerja); return { id: item.id, "Sasaran / Program": item.sasaranProgram || '-', "Kabupaten / Kota": item.kabupatenKota || '-', "Satuan": item.satuan || '-', "Target Kinerja": item.targetKinerja, "Target Anggaran": formatRp(Number(item.targetAnggaran)), "Realisasi Kinerja": item.realisasiKinerja, "Realisasi Anggaran": formatRp(getNominal(item.realisasiAnggaran)) }; });
+
                 // ===== BERANI MENYALA =====
             } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {
                 type = "akses-listrik";
@@ -298,7 +335,7 @@ const monitoringController = {
                 return res.json({ status: "success", msg: "Belum ada data detail untuk tipe sub program ini.", program: subProgram.programKerja.namaProgram, subProgram: subProgram.namaSubProgram, tahun, data: [] });
             }
 
-            res.json({ status: "success", program: subProgram.programKerja.namaProgram, programSlug: subProgram.programKerja.slug, subProgram: subProgram.namaSubProgram, subProgramSlug: subProgram.slug, tahun, type, totalData: totalFisik, data });
+            res.json({ status: "success", program: subProgram.programKerja.namaProgram, programSlug: subProgram.programKerja.slug, subProgram: subProgram.namaSubProgram, subProgramSlug: subProgram.slug, tahun, type, totalData: Math.round(totalFisik * 100000) / 100000, data });
 
         } catch (error) { console.error(error); res.status(500).json({ msg: error.message }); }
     }

@@ -14,6 +14,7 @@ const INCLUDE_ALL = {
     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
     detailJaminanHarga: true, detailPanada: true, detailUep: true,
     detailRutilahu: true, detailUmkm: true, detailMbg: true,
+    detailAirBersih: true, detailDrainase: true, detailMyc: true, detailAgropolitan: true, detailJalanDesa: true, detailKonektivitasBanggai: true, detailKonektivitasTambu: true,
     detailGaspoll: true, detailSpbe: true, detailBudayaKerja: true, detailBantuanKeuangan: true,
     detailAksesListrik: true, detailInternetDesa: true,
 };
@@ -30,7 +31,7 @@ const staffController = {
             const result = {
                 programKerja: { id: programData.id, namaProgram: programData.namaProgram, slug: programData.slug, deskripsiProgram: programData.deskripsi },
                 tahun,
-                daftarSubProgram: programData.subProgram.map(sub => { const t = sub.targetTahunan[0]; return { id: sub.id, namaSubProgram: sub.namaSubProgram, slug: sub.slug, target: t?.target ?? 0, anggaran: t?.anggaran?.toString() ?? '0' }; })
+                daftarSubProgram: programData.subProgram.map(sub => { const t = sub.targetTahunan[0]; return { id: sub.id, namaSubProgram: sub.namaSubProgram, slug: sub.slug, target: t?.target ? Number(t.target) : 0, anggaran: t?.anggaran?.toString() ?? '0' }; })
             };
             res.json({ status: "success", data: result });
         } catch (error) { console.error(error); res.status(500).json({ msg: error.message }); }
@@ -55,7 +56,7 @@ const staffController = {
                 headerId = header.id;
                 const processor = getProcessor(subProgramCheck.namaSubProgram);
                 if (processor) { await processor(tx, header.id, file.path); } else { throw new Error(`Prosesor Excel tidak ditemukan untuk: ${subProgramCheck.namaSubProgram}`); }
-            });
+            }, { timeout: 60000, maxWait: 10000 });
             const savedData = await prisma.dataRealisasi.findUnique({ where: { id: headerId } });
             res.status(201).json({ status: "success", msg: `Laporan tahun ${tahun} berhasil diupload dan diekstrak. Menunggu verifikasi atasan.`, data: savedData });
         } catch (error) {
@@ -113,6 +114,13 @@ const staffController = {
             else if (headerData.detailRutilahu?.length > 0) { detailItems = headerData.detailRutilahu; tipeLaporan = "Revitalisasi Rutilahu"; }
             else if (headerData.detailUmkm?.length > 0) { detailItems = headerData.detailUmkm; tipeLaporan = "Pelatihan UMKM"; }
             else if (headerData.detailMbg?.length > 0) { detailItems = headerData.detailMbg; tipeLaporan = "Makan Bergizi Gratis"; }
+            else if (headerData.detailAirBersih?.length > 0) { detailItems = headerData.detailAirBersih; tipeLaporan = "Jaminan Ketersediaan Air Bersih"; }
+            else if (headerData.detailDrainase?.length > 0) { detailItems = headerData.detailDrainase; tipeLaporan = "Jaminan Ketersediaan Drainase"; }
+            else if (headerData.detailMyc?.length > 0) { detailItems = headerData.detailMyc; tipeLaporan = "Rekonstruksi Jalan MYC"; }
+            else if (headerData.detailAgropolitan?.length > 0) { detailItems = headerData.detailAgropolitan; tipeLaporan = "Pembangunan Kawasan Agropolitan"; }
+            else if (headerData.detailJalanDesa?.length > 0) { detailItems = headerData.detailJalanDesa; tipeLaporan = "Pembangunan 1000 KM Jalan Desa"; }
+            else if (headerData.detailKonektivitasBanggai?.length > 0) { detailItems = headerData.detailKonektivitasBanggai; tipeLaporan = "Konektivitas Banggai Kepulauan"; }
+            else if (headerData.detailKonektivitasTambu?.length > 0) { detailItems = headerData.detailKonektivitasTambu; tipeLaporan = "Konektivitas Tambu Kasimbar"; }
             else if (headerData.detailGaspoll?.length > 0) { detailItems = headerData.detailGaspoll; tipeLaporan = "Tim Gaspoll / Command Center"; }
             else if (headerData.detailSpbe?.length > 0) { detailItems = headerData.detailSpbe; tipeLaporan = "Super Apps / SPBE"; }
             else if (headerData.detailBudayaKerja?.length > 0) { detailItems = headerData.detailBudayaKerja; tipeLaporan = "Budaya Kerja Birokrasi"; }
@@ -126,6 +134,9 @@ const staffController = {
                 "Pencegahan Stunting", "Kualitas Layanan RS",
                 "Jaminan Harga Bahan Pokok", "PANADA", "UEP Graduasi",
                 "Revitalisasi Rutilahu", "Pelatihan UMKM", "Makan Bergizi Gratis",
+                "Jaminan Ketersediaan Air Bersih", "Jaminan Ketersediaan Drainase", "Rekonstruksi Jalan MYC",
+                "Pembangunan Kawasan Agropolitan", "Pembangunan 1000 KM Jalan Desa",
+                "Konektivitas Banggai Kepulauan", "Konektivitas Tambu Kasimbar",
                 "Tim Gaspoll / Command Center", "Super Apps / SPBE", "Budaya Kerja Birokrasi", "Bantuan Keuangan Pemerintah Desa",
                 "Akses Listrik", "Internet Desa",
             ];
