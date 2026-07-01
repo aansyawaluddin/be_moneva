@@ -22,6 +22,8 @@ const monitoringWilayahController = {
                     detailRsRujukan: true, detailStunting: true, detailKualitasRs: true,
                     detailJaminanHarga: true, detailPanada: true, detailUep: true,
                     detailRutilahu: true, detailUmkm: true, detailMbg: true,
+                    detailAirBersih: true, detailDrainase: true, detailMyc: true, detailAgropolitan: true, detailJalanDesa: true, detailKonektivitasBanggai: true, detailKonektivitasTambu: true,
+                    detailWirausaha: true, detailBerbudaya: true, detailInvestasi: true, detailBermitra: true, detailHarmoniCareer: true, detailEkonomiKreatif: true, detailLestari: true, detailProduktif: true, detailWisata: true, detailOlahraga: true,
                     detailGaspoll: true, detailSpbe: true, detailBudayaKerja: true, detailBantuanKeuangan: true,
                     detailAksesListrik: true, detailInternetDesa: true,
                 }
@@ -87,6 +89,25 @@ const monitoringWilayahController = {
                 header.detailRutilahu?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailUmkm?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
                 header.detailMbg?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Lancar
+                header.detailAirBersih?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailDrainase?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailMyc?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailAgropolitan?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailJalanDesa?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailKonektivitasBanggai?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                header.detailKonektivitasTambu?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), Number(item.realisasiKinerja) || 0, prog));
+                // Berani Harmoni
+                header.detailWirausaha?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailBerbudaya?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailInvestasi?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailBermitra?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailHarmoniCareer?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailEkonomiKreatif?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailLestari?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailProduktif?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailWisata?.forEach(item => processItem(item.kabupatenKota || 'Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
+                header.detailOlahraga?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 // Berani Integritas (tidak ada kabupaten spesifik → masuk Lainnya)
                 header.detailGaspoll?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));
                 header.detailSpbe?.forEach(item => processItem('Lainnya', parseNominal(item.realisasiAnggaran), 1, prog));

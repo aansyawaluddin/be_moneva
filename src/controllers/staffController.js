@@ -15,6 +15,7 @@ const INCLUDE_ALL = {
     detailJaminanHarga: true, detailPanada: true, detailUep: true,
     detailRutilahu: true, detailUmkm: true, detailMbg: true,
     detailAirBersih: true, detailDrainase: true, detailMyc: true, detailAgropolitan: true, detailJalanDesa: true, detailKonektivitasBanggai: true, detailKonektivitasTambu: true,
+    detailWirausaha: true, detailBerbudaya: true, detailInvestasi: true, detailBermitra: true, detailHarmoniCareer: true, detailEkonomiKreatif: true, detailLestari: true, detailProduktif: true, detailWisata: true, detailOlahraga: true,
     detailGaspoll: true, detailSpbe: true, detailBudayaKerja: true, detailBantuanKeuangan: true,
     detailAksesListrik: true, detailInternetDesa: true,
 };
@@ -121,6 +122,16 @@ const staffController = {
             else if (headerData.detailJalanDesa?.length > 0) { detailItems = headerData.detailJalanDesa; tipeLaporan = "Pembangunan 1000 KM Jalan Desa"; }
             else if (headerData.detailKonektivitasBanggai?.length > 0) { detailItems = headerData.detailKonektivitasBanggai; tipeLaporan = "Konektivitas Banggai Kepulauan"; }
             else if (headerData.detailKonektivitasTambu?.length > 0) { detailItems = headerData.detailKonektivitasTambu; tipeLaporan = "Konektivitas Tambu Kasimbar"; }
+            else if (headerData.detailWirausaha?.length > 0) { detailItems = headerData.detailWirausaha; tipeLaporan = "Berani Wirausaha"; }
+            else if (headerData.detailBerbudaya?.length > 0) { detailItems = headerData.detailBerbudaya; tipeLaporan = "Berani Berbudaya"; }
+            else if (headerData.detailInvestasi?.length > 0) { detailItems = headerData.detailInvestasi; tipeLaporan = "Berani Berinvestasi"; }
+            else if (headerData.detailBermitra?.length > 0) { detailItems = headerData.detailBermitra; tipeLaporan = "Berani Bermitra"; }
+            else if (headerData.detailHarmoniCareer?.length > 0) { detailItems = headerData.detailHarmoniCareer; tipeLaporan = "Berani Career Center"; }
+            else if (headerData.detailEkonomiKreatif?.length > 0) { detailItems = headerData.detailEkonomiKreatif; tipeLaporan = "Berani Ekonomi Kreatif"; }
+            else if (headerData.detailLestari?.length > 0) { detailItems = headerData.detailLestari; tipeLaporan = "Berani Lestari"; }
+            else if (headerData.detailProduktif?.length > 0) { detailItems = headerData.detailProduktif; tipeLaporan = "Berani Produktif"; }
+            else if (headerData.detailWisata?.length > 0) { detailItems = headerData.detailWisata; tipeLaporan = "Berani Wisata"; }
+            else if (headerData.detailOlahraga?.length > 0) { detailItems = headerData.detailOlahraga; tipeLaporan = "Sarana Olahraga"; }
             else if (headerData.detailGaspoll?.length > 0) { detailItems = headerData.detailGaspoll; tipeLaporan = "Tim Gaspoll / Command Center"; }
             else if (headerData.detailSpbe?.length > 0) { detailItems = headerData.detailSpbe; tipeLaporan = "Super Apps / SPBE"; }
             else if (headerData.detailBudayaKerja?.length > 0) { detailItems = headerData.detailBudayaKerja; tipeLaporan = "Budaya Kerja Birokrasi"; }
@@ -137,6 +148,7 @@ const staffController = {
                 "Jaminan Ketersediaan Air Bersih", "Jaminan Ketersediaan Drainase", "Rekonstruksi Jalan MYC",
                 "Pembangunan Kawasan Agropolitan", "Pembangunan 1000 KM Jalan Desa",
                 "Konektivitas Banggai Kepulauan", "Konektivitas Tambu Kasimbar",
+                "Berani Wirausaha", "Berani Berbudaya", "Berani Berinvestasi", "Berani Bermitra", "Berani Career Center", "Berani Ekonomi Kreatif", "Berani Lestari", "Berani Produktif", "Berani Wisata", "Sarana Olahraga",
                 "Tim Gaspoll / Command Center", "Super Apps / SPBE", "Budaya Kerja Birokrasi", "Bantuan Keuangan Pemerintah Desa",
                 "Akses Listrik", "Internet Desa",
             ];

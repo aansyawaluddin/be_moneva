@@ -34,6 +34,18 @@ import jalanDesaProcessor from './berani_lancar/jalanDesaProcessor.js';
 import konektivitasBanggaiProcessor from './berani_lancar/konektivitasBanggaiProcessor.js';
 import konektivitasTambuProcessor from './berani_lancar/konektivitasTambuProcessor.js';
 
+// Berani Harmoni
+import wirausahaProcessor from './berani_harmoni/wirausahaProcessor.js';
+import berbudayaProcessor from './berani_harmoni/berbudayaProcessor.js';
+import investasiProcessor from './berani_harmoni/investasiProcessor.js';
+import bermitraProcessor from './berani_harmoni/bermitraProcessor.js';
+import harmoniCareerProcessor from './berani_harmoni/harmoniCareerProcessor.js';
+import ekonomiKreatifProcessor from './berani_harmoni/ekonomiKreatifProcessor.js';
+import lestariProcessor from './berani_harmoni/lestariProcessor.js';
+import produktifProcessor from './berani_harmoni/produktifProcessor.js';
+import wisataProcessor from './berani_harmoni/wisataProcessor.js';
+import olahragaProcessor from './berani_harmoni/olahragaProcessor.js';
+
 // Berani Integritas
 import gaspollProcessor from './berani_integritas/gaspollProcessor.js';
 import spbeProcessor from './berani_integritas/spbeProcessor.js';
@@ -78,6 +90,17 @@ const processorRegistry = {
     'jalan-desa': jalanDesaProcessor,
     'konektivitas-banggai': konektivitasBanggaiProcessor,
     'konektivitas-tambu': konektivitasTambuProcessor,
+    // Berani Harmoni
+    'wirausaha': wirausahaProcessor,
+    'berbudaya': berbudayaProcessor,
+    'investasi': investasiProcessor,
+    'bermitra': bermitraProcessor,
+    'harmoni-career': harmoniCareerProcessor,
+    'ekonomi-kreatif': ekonomiKreatifProcessor,
+    'lestari': lestariProcessor,
+    'produktif': produktifProcessor,
+    'wisata': wisataProcessor,
+    'olahraga': olahragaProcessor,
     // Berani Integritas
     'gaspoll': gaspollProcessor,
     'spbe': spbeProcessor,
@@ -107,7 +130,7 @@ export const getProcessor = (subProgramName) => {
         foundKey = 'prakerin';
     } else if (nameLower.includes('penyelesaian studi') || (nameLower.includes('miskin') && nameLower.includes('aktif'))) {
         foundKey = 'beasiswa-miskin';
-    } else if (nameLower.includes('digital') || nameLower.includes('sarana prasarana')) {
+    } else if ((nameLower.includes('digital') && !nameLower.includes('investasi') && !nameLower.includes('berinvestasi')) || (nameLower.includes('sarana prasarana') && !nameLower.includes('olahraga') && !nameLower.includes('stadion') && !nameLower.includes('sport'))) {
         foundKey = 'digital';
     } else if (nameLower.includes('vokasional') || nameLower.includes('siap kerja')) {
         foundKey = 'vokasional';
@@ -120,7 +143,7 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('beasiswa')) {
         foundKey = 'beasiswa';
 
-        // ===== BERANI SEHAT =====
+    // ===== BERANI SEHAT =====
     } else if (nameLower.includes('pemeriksaan kesehatan gratis') || nameLower.includes('dukungan terhadap pelaksanaan')) {
         foundKey = 'pemeriksaan-gratis';
     } else if (nameLower.includes('naseha') || nameLower.includes('jaminan layanan kesehatan')) {
@@ -132,7 +155,7 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('kualitas layanan') || (nameLower.includes('undata') && nameLower.includes('madani') && !nameLower.includes('rujukan'))) {
         foundKey = 'kualitas-rs';
 
-        // ===== BERANI SEJAHTERA =====
+    // ===== BERANI SEJAHTERA =====
     } else if (nameLower.includes('bahan pokok') || (nameLower.includes('jaminan') && nameLower.includes('harga'))) {
         foundKey = 'jaminan-harga';
     } else if (nameLower.includes('panada') || nameLower.includes('pangan daerah')) {
@@ -141,12 +164,10 @@ export const getProcessor = (subProgramName) => {
         foundKey = 'uep';
     } else if (nameLower.includes('rutilahu')) {
         foundKey = 'rutilahu';
-    } else if (nameLower.includes('umkm') || nameLower.includes('kewirausahaan')) {
-        foundKey = 'umkm';
     } else if (nameLower.includes('mbg') || nameLower.includes('makan bergizi')) {
         foundKey = 'mbg';
 
-        // ===== BERANI LANCAR =====
+    // ===== BERANI LANCAR =====
     } else if (nameLower.includes('air bersih') || (nameLower.includes('jaminan') && nameLower.includes('air'))) {
         foundKey = 'air-bersih';
     } else if (nameLower.includes('drainase')) {
@@ -162,7 +183,29 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('tambu') || nameLower.includes('kasimbar') || nameLower.includes('wilayah barat') || nameLower.includes('wilayah timur')) {
         foundKey = 'konektivitas-tambu';
 
-        // ===== BERANI INTEGRITAS =====
+    // ===== BERANI HARMONI =====
+    } else if (nameLower.includes('wirausaha')) {
+        foundKey = 'wirausaha';
+    } else if (nameLower.includes('berbudaya') || (nameLower.includes('budaya') && nameLower.includes('nilai'))) {
+        foundKey = 'berbudaya';
+    } else if (nameLower.includes('investasi') || nameLower.includes('berinvestasi')) {
+        foundKey = 'investasi';
+    } else if (nameLower.includes('bermitra') || nameLower.includes('koperasi merah putih')) {
+        foundKey = 'bermitra';
+    } else if (nameLower.includes('carier center') || nameLower.includes('career center') && nameLower.includes('berani')) {
+        foundKey = 'harmoni-career';
+    } else if (nameLower.includes('ekonomi kreatif') || nameLower.includes('sulteng creative')) {
+        foundKey = 'ekonomi-kreatif';
+    } else if (nameLower.includes('lestari') || nameLower.includes('kearifan lokal')) {
+        foundKey = 'lestari';
+    } else if (nameLower.includes('produktif') || nameLower.includes('berekspresi') || nameLower.includes('pemajuan kebudayaan') || nameLower.includes('cagar')) {
+        foundKey = 'produktif';
+    } else if (nameLower.includes('wisata')) {
+        foundKey = 'wisata';
+    } else if (nameLower.includes('olahraga') || nameLower.includes('stadion') || nameLower.includes('sport center')) {
+        foundKey = 'olahraga';
+
+    // ===== BERANI INTEGRITAS =====
     } else if (nameLower.includes('gaspoll') || nameLower.includes('command center') || nameLower.includes('call center') || nameLower.includes('siaga laporan')) {
         foundKey = 'gaspoll';
     } else if (nameLower.includes('spbe') || nameLower.includes('super app') || nameLower.includes('super aps') || nameLower.includes('layanan publik terintegrasi')) {
@@ -172,11 +215,15 @@ export const getProcessor = (subProgramName) => {
     } else if (nameLower.includes('bantuan keuangan') || nameLower.includes('pemerintah desa') || nameLower.includes('pemerintah des')) {
         foundKey = 'bantuan-keuangan';
 
-        // ===== BERANI MENYALA =====
+    // ===== BERANI MENYALA =====
     } else if (nameLower.includes('listrik') || nameLower.includes('penerangan') || nameLower.includes('lampu jalan')) {
         foundKey = 'akses-listrik';
     } else if (nameLower.includes('internet') || nameLower.includes('blank spot') || nameLower.includes('jaringan')) {
         foundKey = 'internet-desa';
+
+    // ===== BERANI SEJAHTERA (lanjutan - setelah Lancar supaya tidak bentrok) =====
+    } else if (nameLower.includes('umkm') || nameLower.includes('kewirausahaan')) {
+        foundKey = 'umkm';
     }
 
     if (foundKey) {
